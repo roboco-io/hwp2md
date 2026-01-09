@@ -220,11 +220,22 @@ hwp2markdown/
 
 실제 변환 결과를 확인하여 품질을 평가할 수 있습니다.
 
+### Stage 1 (Parser)
+
 | 파일 | 설명 |
 |------|------|
 | [원본 HWPX](testdata/한글%20테스트.hwpx) | 테스트용 한글 문서 (공무원 채용 공고) |
 | [Stage 1 결과](testdata/한글%20테스트_stage1.md) | 파서만 사용한 기본 Markdown 변환 |
-| [Stage 2 결과](testdata/한글%20테스트_stage2.md) | LLM(Claude)을 사용한 포맷팅된 Markdown |
+
+### Stage 2 (LLM 비교)
+
+동일한 문서를 여러 LLM으로 변환한 결과를 비교할 수 있습니다.
+
+| LLM | 결과 | 모델 |
+|-----|------|------|
+| Claude | [결과 보기](testdata/한글%20테스트_stage2_claude.md) | claude-sonnet-4-20250514 |
+| Gemini | [결과 보기](testdata/한글%20테스트_stage2_gemini.md) | gemini-2.0-flash |
+| Solar | [결과 보기](testdata/한글%20테스트_stage2_solar.md) | solar-pro |
 
 Stage 1은 문서 구조를 그대로 추출하며, Stage 2는 LLM을 통해 더 읽기 쉬운 형태로 정리합니다.
 
