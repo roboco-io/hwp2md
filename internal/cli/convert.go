@@ -11,6 +11,8 @@ import (
 	"github.com/roboco-io/hwp2markdown/internal/ir"
 	"github.com/roboco-io/hwp2markdown/internal/llm"
 	"github.com/roboco-io/hwp2markdown/internal/llm/anthropic"
+	"github.com/roboco-io/hwp2markdown/internal/llm/gemini"
+	"github.com/roboco-io/hwp2markdown/internal/llm/ollama"
 	"github.com/roboco-io/hwp2markdown/internal/llm/openai"
 	"github.com/roboco-io/hwp2markdown/internal/parser"
 	"github.com/roboco-io/hwp2markdown/internal/parser/hwpx"
@@ -182,8 +184,16 @@ func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatRes
 		provider, err = anthropic.New(anthropic.Config{
 			Model: model,
 		})
+	case "gemini":
+		provider, err = gemini.New(gemini.Config{
+			Model: model,
+		})
+	case "ollama":
+		provider, err = ollama.New(ollama.Config{
+			Model: model,
+		})
 	default:
-		return "", nil, fmt.Errorf("지원하지 않는 프로바이더: %s (지원: openai, anthropic)", providerName)
+		return "", nil, fmt.Errorf("지원하지 않는 프로바이더: %s (지원: openai, anthropic, gemini, ollama)", providerName)
 	}
 
 	if err != nil {
