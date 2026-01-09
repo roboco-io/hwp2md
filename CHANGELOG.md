@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-01-10
+
 ### Added
 - Upstage Document Parse as alternative Stage 1 parser (`--parser upstage`, `HWP2MD_PARSER=upstage`)
   - Direct HWP/HWPX file support via Upstage API
   - OCR-based layout recognition for complex documents
+  - Markdown output directly from API for better table/list rendering
+- `RawMarkdown` field in IR for external parser passthrough
+- Stage 1 parser comparison examples in README
 
 ## [0.2.0] - 2025-01-10
 
