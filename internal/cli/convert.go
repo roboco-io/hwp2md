@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,9 @@ import (
 
 	"github.com/roboco-io/hwp2markdown/internal/config"
 	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2markdown/internal/llm"
+	"github.com/roboco-io/hwp2markdown/internal/llm/anthropic"
+	"github.com/roboco-io/hwp2markdown/internal/llm/openai"
 	"github.com/roboco-io/hwp2markdown/internal/parser"
 	"github.com/roboco-io/hwp2markdown/internal/parser/hwpx"
 	"github.com/spf13/cobra"
@@ -98,9 +102,16 @@ func runConvert(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(cmd.ErrOrStderr(), "LLM 포맷팅 중...\n")
 		}
 		// Stage 2: LLM formatting
-		markdown, err = formatWithLLM(doc)
+		var result *llm.FormatResult
+		markdown, result, err = formatWithLLM(cmd, doc)
 		if err != nil {
 			return fmt.Errorf("LLM 포맷팅 실패: %w", err)
+		}
+		// Show token usage
+		if !convertQuiet && result != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "모델: %s\n", result.Model)
+			fmt.Fprintf(cmd.ErrOrStderr(), "토큰 사용량: 입력 %d, 출력 %d, 총 %d\n",
+				result.Usage.InputTokens, result.Usage.OutputTokens, result.Usage.TotalTokens)
 		}
 	} else {
 		// Stage 1 only: Basic markdown conversion
@@ -145,10 +156,51 @@ func parseDocumentForConvert(path string, format parser.Format) (*ir.Document, e
 	}
 }
 
-func formatWithLLM(doc *ir.Document) (string, error) {
-	// TODO: Implement LLM formatting in Phase 3
-	// For now, return basic markdown with a note
-	return "<!-- LLM 포맷팅은 Phase 3에서 구현 예정 -->\n\n" + convertToBasicMarkdown(doc), nil
+func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatResult, error) {
+	// Determine provider
+	providerName := convertProvider
+	if providerName == "" {
+		providerName = config.GetEnvOrDefault("HWP2MD_PROVIDER", "anthropic")
+	}
+
+	// Determine model
+	model := convertModel
+	if model == "" {
+		model = os.Getenv("HWP2MD_MODEL")
+	}
+
+	// Create provider
+	var provider llm.Provider
+	var err error
+
+	switch providerName {
+	case "openai":
+		provider, err = openai.New(openai.Config{
+			Model: model,
+		})
+	case "anthropic":
+		provider, err = anthropic.New(anthropic.Config{
+			Model: model,
+		})
+	default:
+		return "", nil, fmt.Errorf("지원하지 않는 프로바이더: %s (지원: openai, anthropic)", providerName)
+	}
+
+	if err != nil {
+		return "", nil, fmt.Errorf("프로바이더 초기화 실패: %w", err)
+	}
+
+	// Format options
+	opts := llm.DefaultFormatOptions()
+
+	// Call LLM
+	ctx := context.Background()
+	result, err := provider.Format(ctx, doc, opts)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return result.Markdown, result, nil
 }
 
 func convertToBasicMarkdown(doc *ir.Document) string {
