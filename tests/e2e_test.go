@@ -165,8 +165,8 @@ func validateFormattedMarkdownStructure(t *testing.T, md string) error {
 		pattern  string
 		minCount int
 	}{
-		{"headings", `(?m)^#{1,6}\s+.+$`, 3},        // At least 3 headings
-		{"tables", `\|.*\|`, 2},                      // At least 2 table rows
+		{"headings", `(?m)^#{1,6}\s+.+$`, 3},              // At least 3 headings
+		{"tables", `\|.*\|`, 2},                           // At least 2 table rows
 		{"list items", `(?m)^[-*]\s+.+$|^\d+\.\s+.+$`, 2}, // At least 2 list items
 	}
 
@@ -266,37 +266,4 @@ func extractWords(text string) []string {
 	// Simple word extraction - split by whitespace and punctuation
 	re := regexp.MustCompile(`[\p{L}\p{N}]+`)
 	return re.FindAllString(text, -1)
-}
-
-// normalizeMarkdown normalizes markdown for comparison
-func normalizeMarkdown(s string) string {
-	// Remove YAML front matter
-	re := regexp.MustCompile(`(?s)^---\n.*?\n---\n*`)
-	s = re.ReplaceAllString(s, "")
-
-	// Normalize whitespace
-	s = strings.TrimSpace(s)
-
-	// Normalize line endings
-	s = strings.ReplaceAll(s, "\r\n", "\n")
-
-	// Collapse multiple blank lines
-	re = regexp.MustCompile(`\n{3,}`)
-	s = re.ReplaceAllString(s, "\n\n")
-
-	// Trim trailing whitespace from each line
-	lines := strings.Split(s, "\n")
-	for i, line := range lines {
-		lines[i] = strings.TrimRight(line, " \t")
-	}
-
-	return strings.Join(lines, "\n")
-}
-
-// truncate truncates string to n characters
-func truncate(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	return s[:n] + "..."
 }
