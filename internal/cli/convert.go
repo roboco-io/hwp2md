@@ -14,6 +14,7 @@ import (
 	"github.com/roboco-io/hwp2markdown/internal/llm/gemini"
 	"github.com/roboco-io/hwp2markdown/internal/llm/ollama"
 	"github.com/roboco-io/hwp2markdown/internal/llm/openai"
+	"github.com/roboco-io/hwp2markdown/internal/llm/upstage"
 	"github.com/roboco-io/hwp2markdown/internal/parser"
 	"github.com/roboco-io/hwp2markdown/internal/parser/hwpx"
 	"github.com/spf13/cobra"
@@ -24,6 +25,7 @@ var (
 	convertUseLLM      bool
 	convertProvider    string
 	convertModel       string
+	convertBaseURL     string
 	convertExtractImgs bool
 	convertImagesDir   string
 	convertVerbose     bool
@@ -42,18 +44,27 @@ var convertCmd = &cobra.Command{
 환경 변수:
   HWP2MD_LLM=true       Stage 2 활성화
   HWP2MD_MODEL=xxx      모델 이름 (프로바이더 자동 감지)
+  HWP2MD_BASE_URL=xxx   프라이빗 API 엔드포인트 (Bedrock, 로컬 서버 등)
 
 모델 이름 예시:
   claude-*              → Anthropic
   gpt-*                 → OpenAI
   gemini-*              → Google Gemini
+  solar-*               → Upstage
   그 외                  → Ollama (로컬)
+
+프라이빗 테넌시 예시:
+  --base-url https://bedrock.us-east-1.amazonaws.com  # AWS Bedrock
+  --base-url http://localhost:8080                     # 로컬 서버
+  --base-url https://your-azure-endpoint.openai.azure.com  # Azure OpenAI
 
 예시:
   hwp2markdown convert document.hwpx
   hwp2markdown convert document.hwpx -o output.md
   hwp2markdown convert document.hwpx --llm
   hwp2markdown convert document.hwpx --llm --model gpt-4o
+  hwp2markdown convert document.hwpx --llm --model solar-pro
+  hwp2markdown convert document.hwpx --llm --base-url http://localhost:8080
   hwp2markdown convert document.hwpx --extract-images ./images`,
 	Args: cobra.ExactArgs(1),
 	RunE: runConvert,
@@ -62,8 +73,9 @@ var convertCmd = &cobra.Command{
 func init() {
 	convertCmd.Flags().StringVarP(&convertOutput, "output", "o", "", "출력 파일 경로 (기본: stdout)")
 	convertCmd.Flags().BoolVar(&convertUseLLM, "llm", false, "LLM 포맷팅 활성화 (Stage 2)")
-	convertCmd.Flags().StringVar(&convertProvider, "provider", "", "LLM 프로바이더 (openai, anthropic, gemini, ollama)")
+	convertCmd.Flags().StringVar(&convertProvider, "provider", "", "LLM 프로바이더 (openai, anthropic, gemini, upstage, ollama)")
 	convertCmd.Flags().StringVar(&convertModel, "model", "", "LLM 모델 이름")
+	convertCmd.Flags().StringVar(&convertBaseURL, "base-url", "", "프라이빗 API 엔드포인트 (Bedrock, Azure, 로컬 서버 등)")
 	convertCmd.Flags().BoolVar(&convertExtractImgs, "extract-images", false, "이미지 추출 활성화")
 	convertCmd.Flags().StringVar(&convertImagesDir, "images-dir", "./images", "추출된 이미지 저장 디렉토리")
 	convertCmd.Flags().BoolVarP(&convertVerbose, "verbose", "v", false, "상세 출력")
@@ -179,6 +191,8 @@ func detectProviderFromModel(model string) string {
 		return "openai"
 	case strings.HasPrefix(model, "gemini"):
 		return "gemini"
+	case strings.HasPrefix(model, "solar"):
+		return "upstage"
 	default:
 		// Unknown model names are assumed to be Ollama (local models)
 		return "ollama"
@@ -190,6 +204,12 @@ func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatRes
 	model := convertModel
 	if model == "" {
 		model = os.Getenv("HWP2MD_MODEL")
+	}
+
+	// Determine base URL (from flag or env) for private tenancy
+	baseURL := convertBaseURL
+	if baseURL == "" {
+		baseURL = os.Getenv("HWP2MD_BASE_URL")
 	}
 
 	// Auto-detect provider from model name, or use explicit flag
@@ -205,22 +225,31 @@ func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatRes
 	switch providerName {
 	case "openai":
 		provider, err = openai.New(openai.Config{
-			Model: model,
+			Model:   model,
+			BaseURL: baseURL,
 		})
 	case "anthropic":
 		provider, err = anthropic.New(anthropic.Config{
-			Model: model,
+			Model:   model,
+			BaseURL: baseURL,
 		})
 	case "gemini":
+		// Gemini does not support custom base URL (uses Google API only)
 		provider, err = gemini.New(gemini.Config{
 			Model: model,
 		})
+	case "upstage":
+		provider, err = upstage.New(upstage.Config{
+			Model:   model,
+			BaseURL: baseURL,
+		})
 	case "ollama":
 		provider, err = ollama.New(ollama.Config{
-			Model: model,
+			Model:   model,
+			BaseURL: baseURL,
 		})
 	default:
-		return "", nil, fmt.Errorf("지원하지 않는 프로바이더: %s (지원: openai, anthropic, gemini, ollama)", providerName)
+		return "", nil, fmt.Errorf("지원하지 않는 프로바이더: %s (지원: openai, anthropic, gemini, upstage, ollama)", providerName)
 	}
 
 	if err != nil {

@@ -217,6 +217,11 @@ func TestDetectProviderFromModel(t *testing.T) {
 		{"gemini-1.5-pro", "gemini"},
 		{"Gemini-2.0-flash", "gemini"},
 
+		// Upstage Solar models
+		{"solar-pro", "upstage"},
+		{"solar-mini", "upstage"},
+		{"Solar-Pro", "upstage"},
+
 		// Unknown models default to Ollama
 		{"llama3.2", "ollama"},
 		{"mistral", "ollama"},

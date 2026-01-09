@@ -124,9 +124,11 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 	}{
 		{"HWP2MD_LLM", "LLM 활성화", os.Getenv("HWP2MD_LLM")},
 		{"HWP2MD_MODEL", "모델 (프로바이더 자동 감지)", os.Getenv("HWP2MD_MODEL")},
+		{"HWP2MD_BASE_URL", "프라이빗 API 엔드포인트", os.Getenv("HWP2MD_BASE_URL")},
 		{"ANTHROPIC_API_KEY", "Anthropic API 키", maskAPIKey(os.Getenv("ANTHROPIC_API_KEY"))},
 		{"OPENAI_API_KEY", "OpenAI API 키", maskAPIKey(os.Getenv("OPENAI_API_KEY"))},
 		{"GOOGLE_API_KEY", "Google API 키", maskAPIKey(os.Getenv("GOOGLE_API_KEY"))},
+		{"UPSTAGE_API_KEY", "Upstage API 키", maskAPIKey(os.Getenv("UPSTAGE_API_KEY"))},
 		{"OLLAMA_HOST", "Ollama 호스트", os.Getenv("OLLAMA_HOST")},
 	}
 

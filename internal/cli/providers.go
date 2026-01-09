@@ -26,13 +26,19 @@ var providers = []providerInfo{
 		Name:         "openai",
 		DefaultModel: "gpt-4o-mini",
 		EnvKey:       "OPENAI_API_KEY",
-		Description:  "OpenAI GPT API",
+		Description:  "OpenAI GPT API (Azure, Bedrock 호환)",
 	},
 	{
 		Name:         "gemini",
 		DefaultModel: "gemini-1.5-flash",
 		EnvKey:       "GOOGLE_API_KEY",
 		Description:  "Google Gemini API",
+	},
+	{
+		Name:         "upstage",
+		DefaultModel: "solar-pro",
+		EnvKey:       "UPSTAGE_API_KEY",
+		Description:  "Upstage Solar API",
 	},
 	{
 		Name:         "ollama",

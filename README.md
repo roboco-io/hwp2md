@@ -88,16 +88,34 @@ hwp2markdown extract document.hwpx --format text
 |------|------|
 | `HWP2MD_LLM` | `true`로 설정하면 LLM 포맷팅 활성화 |
 | `HWP2MD_MODEL` | 사용할 모델 이름 (프로바이더 자동 감지) |
+| `HWP2MD_BASE_URL` | 프라이빗 API 엔드포인트 (Bedrock, Azure, 로컬 서버) |
 | `ANTHROPIC_API_KEY` | Anthropic API 키 |
 | `OPENAI_API_KEY` | OpenAI API 키 |
 | `GOOGLE_API_KEY` | Google Gemini API 키 |
+| `UPSTAGE_API_KEY` | Upstage API 키 |
 | `OLLAMA_HOST` | Ollama 서버 주소 (기본: http://localhost:11434) |
 
 모델 이름으로 프로바이더가 자동 감지됩니다:
 - `claude-*` → Anthropic
 - `gpt-*`, `o1-*`, `o3-*` → OpenAI
 - `gemini-*` → Google Gemini
+- `solar-*` → Upstage
 - 그 외 → Ollama (로컬)
+
+### 프라이빗 테넌시
+
+AWS Bedrock, Azure OpenAI, 로컬 서버 등 프라이빗 엔드포인트를 사용할 수 있습니다:
+
+```bash
+# AWS Bedrock
+hwp2markdown convert document.hwpx --llm --model claude-3-sonnet --base-url https://bedrock-runtime.us-east-1.amazonaws.com
+
+# Azure OpenAI
+hwp2markdown convert document.hwpx --llm --model gpt-4 --base-url https://your-resource.openai.azure.com
+
+# 로컬 서버
+hwp2markdown convert document.hwpx --llm --model llama3.2 --base-url http://localhost:8080
+```
 
 ## 지원 포맷
 
@@ -112,8 +130,9 @@ hwp2markdown extract document.hwpx --format text
 | 프로바이더 | 기본 모델 | 설명 |
 |------------|-----------|------|
 | `anthropic` | claude-sonnet-4-20250514 | Anthropic Claude |
-| `openai` | gpt-4o-mini | OpenAI GPT |
+| `openai` | gpt-4o-mini | OpenAI GPT (Azure, Bedrock 호환) |
 | `gemini` | gemini-1.5-flash | Google Gemini |
+| `upstage` | solar-pro | Upstage Solar |
 | `ollama` | llama3.2 | 로컬 Ollama 서버 |
 
 ## 개발
