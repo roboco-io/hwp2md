@@ -252,7 +252,7 @@ hwp2markdown/
 
 | 파서 | 결과 | 설명 |
 |------|------|------|
-| 원본 | [한글 테스트.hwpx](testdata/한글%20테스트.hwpx) | 테스트용 한글 문서 (공무원 채용 공고) |
+| 원본 | [한글 테스트.hwpx](testdata/한글%20테스트.hwpx), [PDF](testdata/pdf%20테스트.pdf) | 테스트용 한글 문서 (공무원 채용 공고) |
 | Native | [결과 보기](testdata/한글%20테스트_stage1.md) | 내장 HWPX 파서 |
 | Upstage | [결과 보기](testdata/한글%20테스트_stage1_upstage.md) | Upstage Document Parse API |
 
