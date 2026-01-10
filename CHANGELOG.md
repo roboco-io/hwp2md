@@ -15,6 +15,17 @@
   - CLI 바이너리: `hwp2md`
   - GitHub 저장소: `roboco-io/hwp2md`
 
+### 추가
+- 바이브 코딩 튜토리얼 문서 (`docs/vibe-coding-tutorial.md`)
+- README에 튜토리얼 링크 추가
+- Stage 1 비교에 PDF 원본 링크 추가
+
+### 문서
+- 아키텍처 다이어그램에서 Upstage 파서 흐름 수정
+- Upstage Document Parse를 선택적 옵션으로 명시
+- 셀 병합 처리 방식 문서 업데이트
+- CHANGELOG 한국어 번역
+
 ### 마이그레이션 안내
 ```bash
 # 기존 설치 제거
