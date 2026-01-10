@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 // SystemPrompt is the default system prompt for document formatting.

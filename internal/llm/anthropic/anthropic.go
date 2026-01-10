@@ -10,8 +10,8 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
-	"github.com/roboco-io/hwp2markdown/internal/ir"
-	"github.com/roboco-io/hwp2markdown/internal/llm"
+	"github.com/roboco-io/hwp2md/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/llm"
 )
 
 const (

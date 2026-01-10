@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 const (

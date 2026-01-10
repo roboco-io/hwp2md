@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
-	"github.com/roboco-io/hwp2markdown/internal/llm"
+	"github.com/roboco-io/hwp2md/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/llm"
 	goopenai "github.com/sashabaranov/go-openai"
 )
 

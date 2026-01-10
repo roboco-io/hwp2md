@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 func TestBuildPrompt(t *testing.T) {

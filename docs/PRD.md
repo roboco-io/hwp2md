@@ -1,9 +1,9 @@
-# hwp2markdown PRD (Product Requirements Document)
+# hwp2md PRD (Product Requirements Document)
 
 ## 1. 개요
 
 ### 1.1 프로젝트 명
-hwp2markdown
+hwp2md
 
 ### 1.2 목적
 HWP(한글 워드프로세서) 문서를 Markdown으로 변환하는 오픈소스 도구 개발
@@ -33,7 +33,7 @@ HWP(한글 워드프로세서) 문서를 Markdown으로 변환하는 오픈소�
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        hwp2markdown Pipeline                         │
+│                        hwp2md Pipeline                         │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │   Stage 1: Extraction                 Stage 2: Formatting           │
@@ -196,7 +196,7 @@ func (r *ProviderRegistry) Get(name string) (LLMProvider, error) {
 ### 3.4 설정 파일
 
 ```yaml
-# ~/.hwp2markdown/config.yaml
+# ~/.hwp2md/config.yaml
 default_provider: anthropic
 
 providers:
@@ -235,38 +235,38 @@ providers:
 #### UC-1: CLI를 통한 단일 파일 변환 (LLM 사용)
 ```bash
 # 기본 변환 (LLM 포맷팅 포함)
-hwp2markdown convert document.hwpx -o output.md
+hwp2md convert document.hwpx -o output.md
 
 # 특정 LLM 프로바이더 지정
-hwp2markdown convert document.hwpx -o output.md --provider anthropic
+hwp2md convert document.hwpx -o output.md --provider anthropic
 
 # OpenAI 사용
-hwp2markdown convert document.hwpx -o output.md --provider openai --model gpt-4o
+hwp2md convert document.hwpx -o output.md --provider openai --model gpt-4o
 ```
 
 #### UC-2: 텍스트만 추출 (LLM 없이)
 ```bash
 # Stage 1만 실행 - 원시 텍스트 추출
-hwp2markdown extract document.hwpx -o output.txt
+hwp2md extract document.hwpx -o output.txt
 
 # IR (Intermediate Representation) JSON 출력
-hwp2markdown extract document.hwpx -o output.json --format ir
+hwp2md extract document.hwpx -o output.json --format ir
 ```
 
 #### UC-3: 배치 변환
 ```bash
-hwp2markdown convert ./documents/*.hwpx -o ./output/ --provider gemini
+hwp2md convert ./documents/*.hwpx -o ./output/ --provider gemini
 ```
 
 #### UC-4: 라이브러리로 프로그래밍 방식 사용
 ```go
-import "github.com/roboco-io/hwp2markdown/pkg/hwp2markdown"
+import "github.com/roboco-io/hwp2md/pkg/hwp2md"
 
 // Stage 1만 사용
-ir, err := hwp2markdown.Extract("document.hwpx")
+ir, err := hwp2md.Extract("document.hwpx")
 
 // Stage 1 + Stage 2 (LLM 포맷팅)
-result, err := hwp2markdown.Convert("document.hwpx", hwp2markdown.Options{
+result, err := hwp2md.Convert("document.hwpx", hwp2md.Options{
     Provider: "anthropic",
     Model:    "claude-sonnet-4-20250514",
 })
@@ -275,7 +275,7 @@ fmt.Println(result.Markdown)
 
 #### UC-5: 이미지 추출과 함께 변환
 ```bash
-hwp2markdown convert input.hwpx -o output.md --extract-images ./images/
+hwp2md convert input.hwpx -o output.md --extract-images ./images/
 ```
 
 ---
@@ -314,7 +314,7 @@ hwp2markdown convert input.hwpx -o output.md --extract-images ./images/
 ### 5.4 CLI 인터페이스
 
 ```
-hwp2markdown [command] [OPTIONS] <INPUT>...
+hwp2md [command] [OPTIONS] <INPUT>...
 
 Commands:
   convert     HWP/HWPX 파일을 Markdown으로 변환
@@ -361,24 +361,24 @@ Global Options:
 
 ```bash
 # Stage 1만 (기본값) - LLM 없이 기본 Markdown 변환
-hwp2markdown convert document.hwpx -o output.md
+hwp2md convert document.hwpx -o output.md
 
 # Stage 1 + Stage 2 - LLM 포맷팅 활성화 (플래그)
-hwp2markdown convert document.hwpx -o output.md --llm
+hwp2md convert document.hwpx -o output.md --llm
 
 # Stage 1 + Stage 2 - LLM 포맷팅 활성화 (환경변수)
-HWP2MD_LLM=true hwp2markdown convert document.hwpx -o output.md
+HWP2MD_LLM=true hwp2md convert document.hwpx -o output.md
 
 # 특정 모델 지정 (프로바이더 자동 감지)
-hwp2markdown convert document.hwpx -o output.md --llm --model gpt-4o
+hwp2md convert document.hwpx -o output.md --llm --model gpt-4o
 
 # 환경변수로 모델 설정
 export HWP2MD_LLM=true
 export HWP2MD_MODEL=gpt-4o-mini
-hwp2markdown convert document.hwpx -o output.md
+hwp2md convert document.hwpx -o output.md
 
 # IR JSON 추출 (Stage 1만)
-hwp2markdown extract document.hwpx -o output.json --format ir
+hwp2md extract document.hwpx -o output.json --format ir
 ```
 
 ### 5.7 라이브러리 API
@@ -386,16 +386,16 @@ hwp2markdown extract document.hwpx -o output.json --format ir
 #### Go API
 
 ```go
-import "github.com/roboco-io/hwp2markdown/pkg/hwp2markdown"
+import "github.com/roboco-io/hwp2md/pkg/hwp2md"
 
 // Stage 1만: 텍스트 추출 + 기본 Markdown 변환
-result, err := hwp2markdown.Convert("document.hwpx", hwp2markdown.Options{
+result, err := hwp2md.Convert("document.hwpx", hwp2md.Options{
     ExtractImages: true,
     ImageDir:      "./images",
 })
 
 // Stage 1 + Stage 2: LLM 포맷팅 활성화
-result, err := hwp2markdown.Convert("document.hwpx", hwp2markdown.Options{
+result, err := hwp2md.Convert("document.hwpx", hwp2md.Options{
     UseLLM:        true,  // LLM 포맷팅 활성화
     Provider:      "anthropic",
     Model:         "claude-sonnet-4-20250514",
@@ -404,7 +404,7 @@ result, err := hwp2markdown.Convert("document.hwpx", hwp2markdown.Options{
 })
 
 // IR만 추출 (Intermediate Representation)
-ir, err := hwp2markdown.Extract("document.hwpx")
+ir, err := hwp2md.Extract("document.hwpx")
 
 // 결과 사용
 fmt.Println(result.Markdown)
@@ -481,7 +481,7 @@ type TokenUsage struct {
 | 항목 | 요구사항 |
 |------|----------|
 | 바이너리 | 주요 OS용 standalone 바이너리 (GitHub Releases) |
-| Go 모듈 | `go get github.com/roboco-io/hwp2markdown` |
+| Go 모듈 | `go get github.com/roboco-io/hwp2md` |
 | Docker | Docker 이미지 제공 (향후) |
 
 ---
@@ -492,7 +492,7 @@ type TokenUsage struct {
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           hwp2markdown                                   │
+│                           hwp2md                                   │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  CLI Layer                                                              │
 │  ┌───────────────────────────────────────────────────────────────────┐ │

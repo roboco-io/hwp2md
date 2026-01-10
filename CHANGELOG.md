@@ -7,6 +7,23 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-10
+
+### 변경
+- **Breaking Change**: 프로젝트 이름 변경 `hwp2markdown` → `hwp2md`
+  - Go 모듈: `github.com/roboco-io/hwp2md`
+  - CLI 바이너리: `hwp2md`
+  - GitHub 저장소: `roboco-io/hwp2md`
+
+### 마이그레이션 안내
+```bash
+# 기존 설치 제거
+go clean -i github.com/roboco-io/hwp2markdown/cmd/hwp2markdown
+
+# 새 버전 설치
+go install github.com/roboco-io/hwp2md/cmd/hwp2md@latest
+```
+
 ## [0.2.2] - 2025-01-10
 
 ### 변경
@@ -46,7 +63,7 @@
 ## [0.1.0] - 2024-01-10
 
 ### 추가
-- hwp2markdown CLI 도구 초기 릴리즈
+- hwp2md CLI 도구 초기 릴리즈
 - 2단계 파이프라인 아키텍처:
   - Stage 1: 중간 표현(IR)을 사용한 HWPX 파서
   - Stage 2: LLM 기반 Markdown 포맷팅 (선택적)
@@ -78,8 +95,9 @@
 - 모듈형 LLM 프로바이더 아키텍처
 - 종합적인 테스트 커버리지
 
-[Unreleased]: https://github.com/roboco-io/hwp2markdown/compare/v0.2.2...HEAD
-[0.2.2]: https://github.com/roboco-io/hwp2markdown/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/roboco-io/hwp2markdown/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/roboco-io/hwp2markdown/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/roboco-io/hwp2markdown/releases/tag/v0.1.0
+[Unreleased]: https://github.com/roboco-io/hwp2md/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/roboco-io/hwp2md/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/roboco-io/hwp2md/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/roboco-io/hwp2md/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/roboco-io/hwp2md/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/roboco-io/hwp2md/releases/tag/v0.1.0

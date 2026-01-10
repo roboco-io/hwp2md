@@ -1,4 +1,4 @@
-module github.com/roboco-io/hwp2markdown
+module github.com/roboco-io/hwp2md
 
 go 1.24
 

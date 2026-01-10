@@ -230,7 +230,7 @@ pandoc input.docx -o output.md
 - 리베로AI REST API 또는 Vertopal 서비스 활용
 - 온프레미스 필요 시 `unhwp-cli` 배포
 
-### hwp2markdown 프로젝트 방향
+### hwp2md 프로젝트 방향
 
 | 옵션 | 장점 | 단점 |
 |------|------|------|

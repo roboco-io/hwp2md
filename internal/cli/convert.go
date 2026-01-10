@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/roboco-io/hwp2markdown/internal/config"
-	"github.com/roboco-io/hwp2markdown/internal/ir"
-	"github.com/roboco-io/hwp2markdown/internal/llm"
-	"github.com/roboco-io/hwp2markdown/internal/llm/anthropic"
-	"github.com/roboco-io/hwp2markdown/internal/llm/gemini"
-	"github.com/roboco-io/hwp2markdown/internal/llm/ollama"
-	"github.com/roboco-io/hwp2markdown/internal/llm/openai"
-	llmupstage "github.com/roboco-io/hwp2markdown/internal/llm/upstage"
-	"github.com/roboco-io/hwp2markdown/internal/parser"
-	"github.com/roboco-io/hwp2markdown/internal/parser/hwpx"
-	parserupstage "github.com/roboco-io/hwp2markdown/internal/parser/upstage"
+	"github.com/roboco-io/hwp2md/internal/config"
+	"github.com/roboco-io/hwp2md/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/llm"
+	"github.com/roboco-io/hwp2md/internal/llm/anthropic"
+	"github.com/roboco-io/hwp2md/internal/llm/gemini"
+	"github.com/roboco-io/hwp2md/internal/llm/ollama"
+	"github.com/roboco-io/hwp2md/internal/llm/openai"
+	llmupstage "github.com/roboco-io/hwp2md/internal/llm/upstage"
+	"github.com/roboco-io/hwp2md/internal/parser"
+	"github.com/roboco-io/hwp2md/internal/parser/hwpx"
+	parserupstage "github.com/roboco-io/hwp2md/internal/parser/upstage"
 	"github.com/spf13/cobra"
 )
 
@@ -66,14 +66,14 @@ var convertCmd = &cobra.Command{
   --parser=upstage      Upstage Document Parse API 사용 (UPSTAGE_API_KEY 필요)
 
 예시:
-  hwp2markdown convert document.hwpx
-  hwp2markdown convert document.hwpx -o output.md
-  hwp2markdown convert document.hwpx --parser upstage
-  hwp2markdown convert document.hwpx --llm
-  hwp2markdown convert document.hwpx --llm --model gpt-4o
-  hwp2markdown convert document.hwpx --llm --model solar-pro
-  hwp2markdown convert document.hwpx --llm --base-url http://localhost:8080
-  hwp2markdown convert document.hwpx --extract-images ./images`,
+  hwp2md convert document.hwpx
+  hwp2md convert document.hwpx -o output.md
+  hwp2md convert document.hwpx --parser upstage
+  hwp2md convert document.hwpx --llm
+  hwp2md convert document.hwpx --llm --model gpt-4o
+  hwp2md convert document.hwpx --llm --model solar-pro
+  hwp2md convert document.hwpx --llm --base-url http://localhost:8080
+  hwp2md convert document.hwpx --extract-images ./images`,
 	Args: cobra.ExactArgs(1),
 	RunE: runConvert,
 }

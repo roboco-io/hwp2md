@@ -1,9 +1,9 @@
-# hwp2markdown
+# hwp2md
 
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Build](https://github.com/roboco-io/hwp2markdown/actions/workflows/test.yml/badge.svg)](https://github.com/roboco-io/hwp2markdown/actions/workflows/test.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/roboco-io/hwp2markdown)](https://goreportcard.com/report/github.com/roboco-io/hwp2markdown)
+[![Build](https://github.com/roboco-io/hwp2md/actions/workflows/test.yml/badge.svg)](https://github.com/roboco-io/hwp2md/actions/workflows/test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/roboco-io/hwp2md)](https://goreportcard.com/report/github.com/roboco-io/hwp2md)
 
 HWP(한글 워드프로세서) 문서를 Markdown으로 변환하는 CLI 도구
 
@@ -61,19 +61,19 @@ Stage 1만으로도 기본적인 변환이 가능하지만, 복잡한 레이아�
 ### Go 설치 (권장)
 
 ```bash
-go install github.com/roboco-io/hwp2markdown/cmd/hwp2markdown@latest
+go install github.com/roboco-io/hwp2md/cmd/hwp2md@latest
 ```
 
 ### 바이너리 다운로드
 
-[GitHub Releases](https://github.com/roboco-io/hwp2markdown/releases)에서 플랫폼별 바이너리를 다운로드할 수 있습니다.
+[GitHub Releases](https://github.com/roboco-io/hwp2md/releases)에서 플랫폼별 바이너리를 다운로드할 수 있습니다.
 
 | 플랫폼 | 아키텍처 | 파일 |
 |--------|----------|------|
-| Windows | x64 | `hwp2markdown_*_windows_amd64.zip` |
-| macOS | Intel | `hwp2markdown_*_darwin_amd64.tar.gz` |
-| macOS | Apple Silicon | `hwp2markdown_*_darwin_arm64.tar.gz` |
-| Linux | x64 | `hwp2markdown_*_linux_amd64.tar.gz` |
+| Windows | x64 | `hwp2md_*_windows_amd64.zip` |
+| macOS | Intel | `hwp2md_*_darwin_amd64.tar.gz` |
+| macOS | Apple Silicon | `hwp2md_*_darwin_arm64.tar.gz` |
+| Linux | x64 | `hwp2md_*_linux_amd64.tar.gz` |
 
 ## 사용법
 
@@ -81,14 +81,14 @@ go install github.com/roboco-io/hwp2markdown/cmd/hwp2markdown@latest
 
 ```bash
 # HWPX 파일을 Markdown으로 변환
-hwp2markdown document.hwpx -o output.md
+hwp2md document.hwpx -o output.md
 
 # 표준 출력으로 변환
-hwp2markdown document.hwpx
+hwp2md document.hwpx
 ```
 
 > **Note**: `convert` 명령어는 기본 명령이므로 생략할 수 있습니다.
-> `hwp2markdown document.hwpx`와 `hwp2markdown convert document.hwpx`는 동일합니다.
+> `hwp2md document.hwpx`와 `hwp2md convert document.hwpx`는 동일합니다.
 
 ### Upstage Document Parse 사용 (Stage 1 - 선택적)
 
@@ -97,11 +97,11 @@ hwp2markdown document.hwpx
 ```bash
 # Upstage Document Parse 사용
 export UPSTAGE_API_KEY="your-api-key"
-hwp2markdown document.hwpx --parser upstage
+hwp2md document.hwpx --parser upstage
 
 # 환경변수로 설정
 export HWP2MD_PARSER="upstage"
-hwp2markdown document.hwpx
+hwp2md document.hwpx
 ```
 
 > **Note**: Upstage Document Parse는 API 키가 필요하며 사용량에 따라 비용이 발생합니다. 대부분의 HWPX 문서는 내장 파서로 충분히 변환됩니다.
@@ -113,32 +113,32 @@ LLM을 사용하면 더 자연스럽고 읽기 쉬운 Markdown을 생성할 수 
 ```bash
 # Anthropic Claude 사용 (기본)
 export ANTHROPIC_API_KEY="your-api-key"
-hwp2markdown convert document.hwpx --llm
+hwp2md convert document.hwpx --llm
 
 # OpenAI GPT 사용
 export OPENAI_API_KEY="your-api-key"
-hwp2markdown convert document.hwpx --llm --provider openai
+hwp2md convert document.hwpx --llm --provider openai
 
 # Google Gemini 사용
 export GOOGLE_API_KEY="your-api-key"
-hwp2markdown convert document.hwpx --llm --provider gemini
+hwp2md convert document.hwpx --llm --provider gemini
 
 # Upstage Solar 사용
 export UPSTAGE_API_KEY="your-api-key"
-hwp2markdown convert document.hwpx --llm --provider upstage
+hwp2md convert document.hwpx --llm --provider upstage
 
 # Ollama 사용 (로컬)
-hwp2markdown convert document.hwpx --llm --provider ollama --model llama3.2
+hwp2md convert document.hwpx --llm --provider ollama --model llama3.2
 ```
 
 ### IR 추출
 
 ```bash
 # JSON 형식으로 IR 추출
-hwp2markdown extract document.hwpx -o output.json
+hwp2md extract document.hwpx -o output.json
 
 # 텍스트 형식으로 추출
-hwp2markdown extract document.hwpx --format text
+hwp2md extract document.hwpx --format text
 ```
 
 ### 환경 변수
@@ -168,13 +168,13 @@ AWS Bedrock, Azure OpenAI, 로컬 서버 등 프라이빗 엔드포인트를 사
 
 ```bash
 # AWS Bedrock
-hwp2markdown convert document.hwpx --llm --model claude-3-sonnet --base-url https://bedrock-runtime.us-east-1.amazonaws.com
+hwp2md convert document.hwpx --llm --model claude-3-sonnet --base-url https://bedrock-runtime.us-east-1.amazonaws.com
 
 # Azure OpenAI
-hwp2markdown convert document.hwpx --llm --model gpt-4 --base-url https://your-resource.openai.azure.com
+hwp2md convert document.hwpx --llm --model gpt-4 --base-url https://your-resource.openai.azure.com
 
 # 로컬 서버
-hwp2markdown convert document.hwpx --llm --model llama3.2 --base-url http://localhost:8080
+hwp2md convert document.hwpx --llm --model llama3.2 --base-url http://localhost:8080
 ```
 
 ## 지원 포맷
@@ -205,8 +205,8 @@ hwp2markdown convert document.hwpx --llm --model llama3.2 --base-url http://loca
 
 ```bash
 # 저장소 클론
-git clone https://github.com/roboco-io/hwp2markdown.git
-cd hwp2markdown
+git clone https://github.com/roboco-io/hwp2md.git
+cd hwp2md
 
 # 의존성 다운로드
 go mod download
@@ -224,8 +224,8 @@ make lint
 ### 프로젝트 구조
 
 ```
-hwp2markdown/
-├── cmd/hwp2markdown/      # CLI 엔트리포인트
+hwp2md/
+├── cmd/hwp2md/      # CLI 엔트리포인트
 ├── internal/
 │   ├── cli/               # CLI 명령 구현
 │   ├── config/            # 설정 관리

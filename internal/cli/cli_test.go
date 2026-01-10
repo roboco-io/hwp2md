@@ -17,8 +17,8 @@ func TestSetVersion(t *testing.T) {
 
 func TestRootCommand(t *testing.T) {
 	// Test that root command exists and has expected properties
-	if rootCmd.Use != "hwp2markdown [file]" {
-		t.Errorf("expected Use 'hwp2markdown [file]', got '%s'", rootCmd.Use)
+	if rootCmd.Use != "hwp2md [file]" {
+		t.Errorf("expected Use 'hwp2md [file]', got '%s'", rootCmd.Use)
 	}
 
 	if rootCmd.Short == "" {

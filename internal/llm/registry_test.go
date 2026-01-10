@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 // mockProvider is a test implementation of Provider.

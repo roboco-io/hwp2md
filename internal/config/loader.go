@@ -12,7 +12,7 @@ import (
 
 const (
 	// ConfigDirName is the name of the configuration directory.
-	ConfigDirName = ".hwp2markdown"
+	ConfigDirName = ".hwp2md"
 	// ConfigFileName is the name of the configuration file.
 	ConfigFileName = "config.yaml"
 )

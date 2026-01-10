@@ -12,16 +12,16 @@ import (
 // binaryName returns the appropriate binary name for the current OS
 func binaryName() string {
 	if runtime.GOOS == "windows" {
-		return "hwp2markdown_test.exe"
+		return "hwp2md_test.exe"
 	}
-	return "hwp2markdown_test"
+	return "hwp2md_test"
 }
 
 // buildTestBinary builds the test binary and returns a cleanup function
 func buildTestBinary(t *testing.T) (string, func()) {
 	t.Helper()
 	binName := binaryName()
-	buildCmd := exec.Command("go", "build", "-o", binName, "../cmd/hwp2markdown")
+	buildCmd := exec.Command("go", "build", "-o", binName, "../cmd/hwp2md")
 	if err := buildCmd.Run(); err != nil {
 		t.Fatalf("failed to build binary: %v", err)
 	}
@@ -181,8 +181,8 @@ func TestVersionCommand(t *testing.T) {
 		t.Errorf("unexpected error: %v\noutput: %s", err, output)
 	}
 
-	if !strings.Contains(string(output), "hwp2markdown") {
-		t.Errorf("output should contain 'hwp2markdown', got: %s", output)
+	if !strings.Contains(string(output), "hwp2md") {
+		t.Errorf("output should contain 'hwp2md', got: %s", output)
 	}
 }
 
@@ -228,7 +228,7 @@ func TestHelpCommand(t *testing.T) {
 		t.Errorf("unexpected error: %v\noutput: %s", err, output)
 	}
 
-	expectedStrings := []string{"hwp2markdown", "convert", "extract", "providers", "config"}
+	expectedStrings := []string{"hwp2md", "convert", "extract", "providers", "config"}
 	for _, s := range expectedStrings {
 		if !strings.Contains(string(output), s) {
 			t.Errorf("output should contain %q, got: %s", s, output)

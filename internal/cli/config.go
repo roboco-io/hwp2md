@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/roboco-io/hwp2markdown/internal/config"
+	"github.com/roboco-io/hwp2md/internal/config"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -14,9 +14,9 @@ import (
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "설정 관리",
-	Long: `hwp2markdown 설정을 관리합니다.
+	Long: `hwp2md 설정을 관리합니다.
 
-설정 파일 위치: ~/.hwp2markdown/config.yaml
+설정 파일 위치: ~/.hwp2md/config.yaml
 
 하위 명령:
   show    현재 설정 표시
@@ -38,7 +38,7 @@ var configShowCmd = &cobra.Command{
 var configInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "기본 설정 파일 생성",
-	Long: `기본 설정 파일을 ~/.hwp2markdown/config.yaml에 생성합니다.
+	Long: `기본 설정 파일을 ~/.hwp2md/config.yaml에 생성합니다.
 
 이미 설정 파일이 있는 경우 오류가 발생합니다.
 기존 파일을 덮어쓰려면 --force 플래그를 사용하세요.`,
@@ -56,8 +56,8 @@ var configSetCmd = &cobra.Command{
   format.language     출력 언어 (ko, en)
 
 예시:
-  hwp2markdown config set default_provider openai
-  hwp2markdown config set format.temperature 0.5`,
+  hwp2md config set default_provider openai
+  hwp2md config set format.temperature 0.5`,
 	Args: cobra.ExactArgs(2),
 	RunE: runConfigSet,
 }

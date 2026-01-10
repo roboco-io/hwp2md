@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/roboco-io/hwp2markdown/internal/cli"
+	"github.com/roboco-io/hwp2md/internal/cli"
 )
 
 var version = "dev"

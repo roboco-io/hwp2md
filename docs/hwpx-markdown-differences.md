@@ -154,17 +154,17 @@ Stage 2 (LLM 포맷팅)를 사용하면 위의 제한사항으로 인해 발생�
 
 ```bash
 # Stage 1만 (파서)
-hwp2markdown convert document.hwpx
+hwp2md convert document.hwpx
 
 # Stage 2 포함 (LLM 포맷팅)
-hwp2markdown convert document.hwpx --llm
+hwp2md convert document.hwpx --llm
 ```
 
 ## 기여하기
 
-새로운 차이점을 발견하거나 변환 방식 개선 제안이 있으시면 [GitHub Issues](https://github.com/roboco-io/hwp2markdown/issues)에 등록해 주세요.
+새로운 차이점을 발견하거나 변환 방식 개선 제안이 있으시면 [GitHub Issues](https://github.com/roboco-io/hwp2md/issues)에 등록해 주세요.
 
 ---
 
-*이 문서는 hwp2markdown 변환기 개발 과정에서 발견된 차이점을 기록합니다.*
+*이 문서는 hwp2md 변환기 개발 과정에서 발견된 차이점을 기록합니다.*
 *마지막 업데이트: 2026-01-10*

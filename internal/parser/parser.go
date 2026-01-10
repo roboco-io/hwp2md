@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 // Parser is the interface for document parsers.

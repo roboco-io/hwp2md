@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/roboco-io/hwp2markdown/internal/parser"
+	"github.com/roboco-io/hwp2md/internal/parser"
 )
 
 func TestParseManifest(t *testing.T) {

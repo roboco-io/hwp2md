@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
-	"github.com/roboco-io/hwp2markdown/internal/parser"
-	"github.com/roboco-io/hwp2markdown/internal/parser/hwpx"
+	"github.com/roboco-io/hwp2md/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/parser"
+	"github.com/roboco-io/hwp2md/internal/parser/hwpx"
 	"github.com/spf13/cobra"
 )
 
@@ -29,10 +29,10 @@ Stage 1만 실행하며, LLM 포맷팅 없이 구조화된 데이터를 출력�
 출력 형식은 JSON 또는 텍스트(요약)를 지원합니다.
 
 예시:
-  hwp2markdown extract document.hwpx
-  hwp2markdown extract document.hwpx -o output.json
-  hwp2markdown extract document.hwpx --format text
-  hwp2markdown extract document.hwpx --extract-images ./images`,
+  hwp2md extract document.hwpx
+  hwp2md extract document.hwpx -o output.json
+  hwp2md extract document.hwpx --format text
+  hwp2md extract document.hwpx --extract-images ./images`,
 	Args: cobra.ExactArgs(1),
 	RunE: runExtract,
 }

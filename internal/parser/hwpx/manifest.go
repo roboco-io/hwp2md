@@ -4,7 +4,7 @@ package hwpx
 import (
 	"encoding/xml"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 // Manifest represents the OPF package manifest (content.hpf).

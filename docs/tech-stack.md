@@ -1,8 +1,8 @@
-# hwp2markdown 기술 스택
+# hwp2md 기술 스택
 
 ## 1. 개요
 
-hwp2markdown은 크로스 플랫폼 CLI 도구로, Windows, macOS, Linux에서 모두 동작해야 한다. 이 문서는 기술 스택 선정 과정과 결정 사항을 정리한다.
+hwp2md은 크로스 플랫폼 CLI 도구로, Windows, macOS, Linux에서 모두 동작해야 한다. 이 문서는 기술 스택 선정 과정과 결정 사항을 정리한다.
 
 ---
 
@@ -119,7 +119,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-    Use:   "hwp2markdown",
+    Use:   "hwp2md",
     Short: "HWP/HWPX 문서를 Markdown으로 변환",
     Long:  `HWP(한글 워드프로세서) 문서를 Markdown으로 변환하는 CLI 도구입니다.`,
 }
@@ -161,7 +161,7 @@ func init() {
 ### 4.5 전체 의존성 (go.mod)
 
 ```go
-module github.com/roboco-io/hwp2markdown
+module github.com/roboco-io/hwp2md
 
 go 1.21
 
@@ -186,45 +186,45 @@ Go는 단일 명령으로 모든 플랫폼용 바이너리 생성 가능:
 
 ```bash
 # Windows
-GOOS=windows GOARCH=amd64 go build -o hwp2markdown-windows-x64.exe
+GOOS=windows GOARCH=amd64 go build -o hwp2md-windows-x64.exe
 
 # macOS Intel
-GOOS=darwin GOARCH=amd64 go build -o hwp2markdown-macos-x64
+GOOS=darwin GOARCH=amd64 go build -o hwp2md-macos-x64
 
 # macOS Apple Silicon
-GOOS=darwin GOARCH=arm64 go build -o hwp2markdown-macos-arm64
+GOOS=darwin GOARCH=arm64 go build -o hwp2md-macos-arm64
 
 # Linux
-GOOS=linux GOARCH=amd64 go build -o hwp2markdown-linux-x64
+GOOS=linux GOARCH=amd64 go build -o hwp2md-linux-x64
 ```
 
 ### 5.2 빌드 최적화
 
 ```bash
 # 릴리스 빌드 (심볼 제거, 크기 최적화)
-go build -ldflags="-s -w" -o hwp2markdown
+go build -ldflags="-s -w" -o hwp2md
 
 # 버전 정보 삽입
-go build -ldflags="-s -w -X main.version=1.0.0" -o hwp2markdown
+go build -ldflags="-s -w -X main.version=1.0.0" -o hwp2md
 ```
 
 ### 5.3 배포 대상
 
 | 플랫폼 | 아키텍처 | 파일명 | 예상 크기 |
 |--------|----------|--------|-----------|
-| Windows | x64 | `hwp2markdown-windows-x64.exe` | ~8MB |
-| macOS | x64 | `hwp2markdown-macos-x64` | ~8MB |
-| macOS | arm64 | `hwp2markdown-macos-arm64` | ~8MB |
-| Linux | x64 | `hwp2markdown-linux-x64` | ~8MB |
+| Windows | x64 | `hwp2md-windows-x64.exe` | ~8MB |
+| macOS | x64 | `hwp2md-macos-x64` | ~8MB |
+| macOS | arm64 | `hwp2md-macos-arm64` | ~8MB |
+| Linux | x64 | `hwp2md-linux-x64` | ~8MB |
 
 ---
 
 ## 6. 프로젝트 구조
 
 ```
-hwp2markdown/
+hwp2md/
 ├── cmd/
-│   └── hwp2markdown/
+│   └── hwp2md/
 │       └── main.go              # 진입점
 ├── internal/
 │   ├── cli/
@@ -262,7 +262,7 @@ hwp2markdown/
 │       ├── markdown.go          # Markdown 렌더러
 │       └── text.go              # Plain Text 렌더러
 ├── pkg/
-│   └── hwp2markdown/
+│   └── hwp2md/
 │       └── convert.go           # 공개 API
 ├── testdata/
 │   ├── sample.hwpx
@@ -297,7 +297,7 @@ VERSION ?= $(shell git describe --tags --always --dirty)
 LDFLAGS := -ldflags="-s -w -X main.version=$(VERSION)"
 
 build:
-	go build $(LDFLAGS) -o bin/hwp2markdown ./cmd/hwp2markdown
+	go build $(LDFLAGS) -o bin/hwp2md ./cmd/hwp2md
 
 test:
 	go test -v -race -cover ./...
@@ -309,18 +309,18 @@ clean:
 	rm -rf bin/ dist/
 
 release:
-	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o dist/hwp2markdown-windows-x64.exe ./cmd/hwp2markdown
-	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o dist/hwp2markdown-macos-x64 ./cmd/hwp2markdown
-	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o dist/hwp2markdown-macos-arm64 ./cmd/hwp2markdown
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o dist/hwp2markdown-linux-x64 ./cmd/hwp2markdown
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o dist/hwp2md-windows-x64.exe ./cmd/hwp2md
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o dist/hwp2md-macos-x64 ./cmd/hwp2md
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o dist/hwp2md-macos-arm64 ./cmd/hwp2md
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o dist/hwp2md-linux-x64 ./cmd/hwp2md
 ```
 
 ### 7.2 개발 환경 설정
 
 ```bash
 # 저장소 클론
-git clone https://github.com/roboco-io/hwp2markdown.git
-cd hwp2markdown
+git clone https://github.com/roboco-io/hwp2md.git
+cd hwp2md
 
 # 의존성 다운로드
 go mod download
@@ -424,12 +424,12 @@ jobs:
 
 ```yaml
 # .goreleaser.yml
-project_name: hwp2markdown
+project_name: hwp2md
 
 builds:
-  - id: hwp2markdown
-    main: ./cmd/hwp2markdown
-    binary: hwp2markdown
+  - id: hwp2md
+    main: ./cmd/hwp2md
+    binary: hwp2md
     env:
       - CGO_ENABLED=0
     goos:
@@ -465,7 +465,7 @@ changelog:
 release:
   github:
     owner: roboco-io
-    name: hwp2markdown
+    name: hwp2md
 ```
 
 ---
@@ -662,7 +662,7 @@ package openai
 import (
     "context"
     "github.com/sashabaranov/go-openai"
-    "github.com/roboco-io/hwp2markdown/internal/llm"
+    "github.com/roboco-io/hwp2md/internal/llm"
 )
 
 type OpenAIProvider struct {
@@ -715,7 +715,7 @@ func (p *OpenAIProvider) Format(ctx context.Context, ir *llm.IntermediateReprese
 ### 10.5 설정 파일
 
 ```yaml
-# ~/.hwp2markdown/config.yaml
+# ~/.hwp2md/config.yaml
 
 default_provider: anthropic
 

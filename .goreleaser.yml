@@ -1,6 +1,6 @@
 version: 2
 
-project_name: hwp2markdown
+project_name: hwp2md
 
 before:
   hooks:
@@ -8,9 +8,9 @@ before:
     - go generate ./...
 
 builds:
-  - id: hwp2markdown
-    main: ./cmd/hwp2markdown
-    binary: hwp2markdown
+  - id: hwp2md
+    main: ./cmd/hwp2md
+    binary: hwp2md
     env:
       - CGO_ENABLED=0
     goos:
@@ -67,12 +67,12 @@ changelog:
 release:
   github:
     owner: roboco-io
-    name: hwp2markdown
+    name: hwp2md
   draft: false
   prerelease: auto
   mode: replace
   header: |
-    ## hwp2markdown {{ .Version }}
+    ## hwp2md {{ .Version }}
 
     HWP(한글 워드프로세서) 문서를 Markdown으로 변환하는 CLI 도구입니다.
 
@@ -83,7 +83,7 @@ release:
 
     #### Go 설치
     ```bash
-    go install github.com/roboco-io/hwp2markdown/cmd/hwp2markdown@{{ .Version }}
+    go install github.com/roboco-io/hwp2md/cmd/hwp2md@{{ .Version }}
     ```
 
     ### 주요 기능
@@ -95,15 +95,15 @@ release:
 
     ---
 
-    **Full Changelog**: https://github.com/roboco-io/hwp2markdown/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/roboco-io/hwp2md/compare/{{ .PreviousTag }}...{{ .Tag }}
 
-    자세한 변경 내역은 [CHANGELOG.md](https://github.com/roboco-io/hwp2markdown/blob/main/CHANGELOG.md)를 참조하세요.
+    자세한 변경 내역은 [CHANGELOG.md](https://github.com/roboco-io/hwp2md/blob/main/CHANGELOG.md)를 참조하세요.
 
 # Homebrew (향후 지원 예정)
 # brews:
 #   - repository:
 #       owner: roboco-io
 #       name: homebrew-tap
-#     homepage: https://github.com/roboco-io/hwp2markdown
+#     homepage: https://github.com/roboco-io/hwp2md
 #     description: HWP to Markdown converter CLI tool
 #     license: MIT

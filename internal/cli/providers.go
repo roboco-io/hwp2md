@@ -57,8 +57,8 @@ var providersCmd = &cobra.Command{
 (ollama는 로컬 서버로 API 키가 필요하지 않습니다)
 
 사용 예시:
-  hwp2markdown convert document.hwpx --llm --provider anthropic
-  hwp2markdown convert document.hwpx --llm --provider openai --model gpt-4o`,
+  hwp2md convert document.hwpx --llm --provider anthropic
+  hwp2md convert document.hwpx --llm --provider openai --model gpt-4o`,
 	Run: runProviders,
 }
 

@@ -4,7 +4,7 @@ package llm
 import (
 	"context"
 
-	"github.com/roboco-io/hwp2markdown/internal/ir"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 // Provider is the interface that all LLM providers must implement.
