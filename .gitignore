@@ -33,3 +33,13 @@ Thumbs.db
 
 # Build artifacts
 *.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor
+.omx/
+
+# md2hwp outputs
+testdata/md2hwp-outputs/
