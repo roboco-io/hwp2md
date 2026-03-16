@@ -43,3 +43,6 @@ __pycache__/
 
 # md2hwp outputs
 testdata/md2hwp-outputs/
+
+# Personal business plan data
+바이탈루_*.json
