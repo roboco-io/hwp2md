@@ -74,6 +74,31 @@ HWP/HWPX → Stage 1 (Parser) → IR → Stage 2 (LLM, optional) → Markdown
 | `HWP2MD_BASE_URL` | Private API endpoint (Bedrock, Azure, local) |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `UPSTAGE_API_KEY` | Provider API keys |
 
+## md2hwp (Reverse Pipeline)
+
+HWPX template injection engine: fill government templates with business plan content.
+
+- **Engine**: `tools/md2hwp/fill_hwpx.py` (Python, lxml)
+- **Design doc**: `docs/md2hwp/DESIGN.md`
+- **Test template**: `testdata/hwpx_20260302_200059.hwpx` (재도전성공패키지)
+
+```bash
+# Inspect template
+python3 tools/md2hwp/fill_hwpx.py --inspect <template.hwpx>
+python3 tools/md2hwp/fill_hwpx.py --inspect-tables <template.hwpx>
+
+# Fill template
+python3 tools/md2hwp/fill_hwpx.py <fill_plan.json>
+```
+
+### Collaboration
+
+- **Claude (architect)**: Design, review PRs, integration testing
+- **ChatGPT Codex (implementer)**: Code implementation, unit tests
+- **Sync point**: GitHub issues on baekho-lim/hwp2md
+- **Codex instructions**: `AGENTS.md`
+- **Epic**: baekho-lim/hwp2md#7
+
 ## Conventions
 
 - Korean is the primary language for CLI messages, comments, and documentation

@@ -232,22 +232,12 @@ func (p *Parser) parseSectionXML(doc *ir.Document, decoder *xml.Decoder) error {
 				// Text element - read content
 				if currentParagraph != nil {
 					text, _ := readElementText(decoder)
-					cell := getCurrentCell()
-					if cell != nil {
-						cell.text.WriteString(text)
-					} else {
-						currentParagraph.Text += text
-					}
+					currentParagraph.Text += text
 				}
 
 			case "tab":
 				if currentParagraph != nil {
-					cell := getCurrentCell()
-					if cell != nil {
-						cell.text.WriteString("\t")
-					} else {
-						currentParagraph.Text += "\t"
-					}
+					currentParagraph.Text += "\t"
 				}
 
 			case "br":
@@ -259,12 +249,7 @@ func (p *Parser) parseSectionXML(doc *ir.Document, decoder *xml.Decoder) error {
 						}
 					}
 					if brType == "line" {
-						cell := getCurrentCell()
-						if cell != nil {
-							cell.text.WriteString("\n")
-						} else {
-							currentParagraph.Text += "\n"
-						}
+						currentParagraph.Text += "\n"
 					}
 				}
 

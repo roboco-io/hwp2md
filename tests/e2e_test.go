@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"archive/zip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +9,63 @@ import (
 	"strings"
 	"testing"
 )
+
+func createTempHWPXWithMultiParagraphCell(t *testing.T) string {
+	t.Helper()
+
+	tempDir := t.TempDir()
+	hwpxPath := filepath.Join(tempDir, "table-cell-multi-paragraph.hwpx")
+
+	file, err := os.Create(hwpxPath)
+	if err != nil {
+		t.Fatalf("failed to create temp hwpx: %v", err)
+	}
+	defer file.Close()
+
+	zipWriter := zip.NewWriter(file)
+	defer zipWriter.Close()
+
+	manifest := `<?xml version="1.0" encoding="UTF-8"?>
+<opf:package xmlns:opf="http://www.idpf.org/2007/opf/">
+  <opf:manifest>
+    <opf:item id="section0" href="Contents/section0.xml" media-type="application/xml"/>
+  </opf:manifest>
+  <opf:spine>
+    <opf:itemref idref="section0"/>
+  </opf:spine>
+</opf:package>`
+
+	section := `<?xml version="1.0" encoding="UTF-8"?>
+<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section"
+        xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph">
+  <hp:tbl>
+    <hp:tr>
+      <hp:tc>
+        <hp:subList>
+          <hp:p><hp:run><hp:t>문단1</hp:t></hp:run></hp:p>
+          <hp:p><hp:run><hp:t>문단2</hp:t></hp:run></hp:p>
+          <hp:p><hp:run><hp:t>문단3</hp:t></hp:run></hp:p>
+        </hp:subList>
+      </hp:tc>
+    </hp:tr>
+  </hp:tbl>
+</hs:sec>`
+
+	addZipEntry := func(name, content string) {
+		entry, createErr := zipWriter.Create(name)
+		if createErr != nil {
+			t.Fatalf("failed to create zip entry %s: %v", name, createErr)
+		}
+		if _, writeErr := entry.Write([]byte(content)); writeErr != nil {
+			t.Fatalf("failed to write zip entry %s: %v", name, writeErr)
+		}
+	}
+
+	addZipEntry("content.hpf", manifest)
+	addZipEntry("Contents/section0.xml", section)
+
+	return hwpxPath
+}
 
 // E2E Test for Stage 1: HWPX -> Basic Markdown
 // Verifies that converting testdata/한글 테스트.hwpx produces valid markdown with expected content
@@ -38,6 +96,26 @@ func TestE2EStage1_HWPXToMarkdown(t *testing.T) {
 	// Validate Stage 1 output structure and content
 	if err := validateStage1Output(t, actualMD); err != nil {
 		t.Errorf("Stage 1 validation failed: %v", err)
+	}
+}
+
+func TestE2EStage1_HWPXTableCellParagraphBreaks(t *testing.T) {
+	inputFile := createTempHWPXWithMultiParagraphCell(t)
+	binPath, cleanup := buildTestBinary(t)
+	defer cleanup()
+
+	cmd := exec.Command("./"+binPath, "convert", inputFile)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("convert command failed: %v\noutput: %s", err, output)
+	}
+
+	md := string(output)
+	if !strings.Contains(md, "문단1<br>문단2<br>문단3") {
+		t.Fatalf("expected table cell paragraph boundaries rendered with <br>, got: %s", md)
+	}
+	if strings.Contains(md, "문단1문단2문단3") {
+		t.Fatalf("unexpected concatenated table cell text without boundaries: %s", md)
 	}
 }
 

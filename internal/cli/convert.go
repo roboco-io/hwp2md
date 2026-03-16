@@ -492,7 +492,7 @@ func writeMarkdownTable(sb *strings.Builder, t *ir.TableBlock) {
 			if ref.row >= 0 && ref.col >= 0 {
 				if ref.row == i && ref.col == j {
 					// This is the original cell
-					text = strings.ReplaceAll(t.Cells[i][j].Text, "\n", " ")
+					text = formatTableCellText(t.Cells[i][j].Text)
 				} else if ref.row < i && ref.col == j {
 					// Vertically merged cell (rowspan) - use 〃
 					text = "〃"
@@ -515,6 +515,12 @@ func writeMarkdownTable(sb *strings.Builder, t *ir.TableBlock) {
 		}
 	}
 	sb.WriteString("\n")
+}
+
+func formatTableCellText(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	return strings.ReplaceAll(text, "\n", "<br>")
 }
 
 // isInfoBoxTable detects "info-box" style tables that should be converted to text format.

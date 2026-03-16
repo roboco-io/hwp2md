@@ -276,6 +276,71 @@ func TestParser_ParseWithTable(t *testing.T) {
 	}
 }
 
+func TestParser_ParseWithTableCellMultiParagraph(t *testing.T) {
+	tmpDir := t.TempDir()
+	hwpxPath := filepath.Join(tmpDir, "table_multi_paragraph.hwpx")
+
+	f, err := os.Create(hwpxPath)
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+
+	w := zip.NewWriter(f)
+
+	manifestContent := `<?xml version="1.0" encoding="UTF-8"?>
+<opf:package xmlns:opf="http://www.idpf.org/2007/opf/">
+  <opf:manifest>
+    <opf:item id="section0" href="Contents/section0.xml" media-type="application/xml"/>
+  </opf:manifest>
+  <opf:spine><opf:itemref idref="section0"/></opf:spine>
+</opf:package>`
+	addZipFile(t, w, "content.hpf", []byte(manifestContent))
+
+	sectionContent := `<?xml version="1.0" encoding="UTF-8"?>
+<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section"
+        xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph"
+        xmlns:ht="http://www.hancom.co.kr/hwpml/2011/table">
+  <ht:tbl>
+    <ht:tr>
+      <ht:tc>
+        <hp:p><hp:run><hp:t>문단1</hp:t></hp:run></hp:p>
+        <hp:p><hp:run><hp:t>문단2</hp:t></hp:run></hp:p>
+        <hp:p><hp:run><hp:t>문단3</hp:t></hp:run></hp:p>
+      </ht:tc>
+    </ht:tr>
+  </ht:tbl>
+</hs:sec>`
+	addZipFile(t, w, "Contents/section0.xml", []byte(sectionContent))
+
+	if err := w.Close(); err != nil {
+		t.Fatalf("failed to close zip writer: %v", err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close file: %v", err)
+	}
+
+	p, err := New(hwpxPath, parser.Options{})
+	if err != nil {
+		t.Fatalf("failed to create parser: %v", err)
+	}
+	defer p.Close()
+
+	doc, err := p.Parse()
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	if len(doc.Content) != 1 || doc.Content[0].Table == nil {
+		t.Fatalf("expected one table block, got %+v", doc.Content)
+	}
+
+	got := doc.Content[0].Table.Cells[0][0].Text
+	want := "문단1\n문단2\n문단3"
+	if got != want {
+		t.Errorf("expected multi-paragraph cell text %q, got %q", want, got)
+	}
+}
+
 func TestReadElementText(t *testing.T) {
 	tests := []struct {
 		name     string

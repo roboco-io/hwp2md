@@ -1,0 +1,43 @@
+{
+  "template_file": "testdata/hwpx_20260302_200059.hwpx",
+  "output_file": "/tmp/e2e_fill_test.hwpx",
+  "simple_replacements": [
+    {
+      "find": "OO학과 교수 재직(00년)",
+      "replace": "테스트 경력 내용"
+    }
+  ],
+  "section_replacements": [
+    {
+      "section_id": "1-1",
+      "guide_text_prefix": "※ 과거 폐업 원인을",
+      "content": "테스트 섹션 치환 내용",
+      "clear_cell": true
+    }
+  ],
+  "table_cell_fills": [
+    {
+      "find_label": "과제명",
+      "value": "테스트 과제명"
+    },
+    {
+      "find_label": "기업명",
+      "value": "테스트 기업명"
+    },
+    {
+      "find_label": "아이템(서비스) 개요",
+      "value": "테스트 아이템 개요"
+    }
+  ],
+  "multi_paragraph_fills": [
+    {
+      "section_id": "2-1",
+      "guide_text_prefix": "신청하기 이전까지",
+      "paragraphs": [
+        "테스트 준비현황 문단 1",
+        "테스트 준비현황 문단 2",
+        "테스트 준비현황 문단 3"
+      ]
+    }
+  ]
+}

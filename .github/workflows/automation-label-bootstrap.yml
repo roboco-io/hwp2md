@@ -1,0 +1,63 @@
+name: Automation Label Bootstrap
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  bootstrap-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure automation labels exist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'task', color: '0E8A16', description: 'Tracked implementation task' },
+              { name: 'backlog', color: 'BFD4F2', description: 'Queued but not ready for execution' },
+              { name: 'ready-codex', color: '1D76DB', description: 'Ready for Codex execution' },
+              { name: 'in-progress', color: 'FBCA04', description: 'Actively being implemented' },
+              { name: 'needs-claude-review', color: '5319E7', description: 'Awaiting Claude PM review' },
+              { name: 'approved', color: '0E8A16', description: 'Approved for merge' },
+              { name: 'blocked', color: 'D93F0B', description: 'Blocked by dependency or risk' },
+              { name: 'needs-human', color: 'B60205', description: 'Automation halted, human decision required' },
+              { name: 'done', color: 'C2E0C6', description: 'Completed and verified' },
+              { name: 'auto-loop', color: '0052CC', description: 'Opt-in: create follow-up PM issue after merge' },
+              { name: 'ready-claude', color: '5319E7', description: 'Ready for Claude PM planning/review' },
+            ];
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                });
+                await github.rest.issues.updateLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  color: label.color,
+                  description: label.description,
+                });
+                core.info(`Updated label: ${label.name}`);
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description,
+                  });
+                  core.info(`Created label: ${label.name}`);
+                } else {
+                  throw error;
+                }
+              }
+            }
