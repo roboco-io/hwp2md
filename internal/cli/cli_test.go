@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func TestSetVersion(t *testing.T) {
@@ -234,6 +235,45 @@ func TestDetectProviderFromModel(t *testing.T) {
 			result := detectProviderFromModel(tc.model)
 			if result != tc.expected {
 				t.Errorf("detectProviderFromModel(%q) = %q, want %q", tc.model, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestParseLLMTimeout(t *testing.T) {
+	tests := []struct {
+		name    string
+		flag    string
+		env     string
+		want    time.Duration
+		wantErr bool
+	}{
+		{"both empty falls back to provider default", "", "", 0, false},
+		{"flag value parsed", "5m", "", 5 * time.Minute, false},
+		{"env value parsed when flag empty", "", "300s", 300 * time.Second, false},
+		{"flag overrides env", "10m", "30s", 10 * time.Minute, false},
+		{"compound duration", "10m30s", "", 10*time.Minute + 30*time.Second, false},
+		{"whitespace trimmed", "  2m ", "", 2 * time.Minute, false},
+		{"invalid flag returns error", "abc", "", 0, true},
+		{"invalid env returns error", "", "5", 0, true},
+		{"zero rejected", "0s", "", 0, true},
+		{"negative rejected", "-1s", "", 0, true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseLLMTimeout(tc.flag, tc.env)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("parseLLMTimeout(%q, %q) expected error, got nil", tc.flag, tc.env)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("parseLLMTimeout(%q, %q) unexpected error: %v", tc.flag, tc.env, err)
+			}
+			if got != tc.want {
+				t.Errorf("parseLLMTimeout(%q, %q) = %v, want %v", tc.flag, tc.env, got, tc.want)
 			}
 		})
 	}
