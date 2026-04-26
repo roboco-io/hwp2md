@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/roboco-io/hwp2md/internal/config"
 )
 
 func TestSetVersion(t *testing.T) {
@@ -284,6 +286,175 @@ func TestParseLLMTimeout(t *testing.T) {
 			if got != tc.want {
 				t.Errorf("parseLLMTimeout(%q, %q) = %v, want %v", tc.flag, tc.env, got, tc.want)
 			}
+		})
+	}
+}
+
+func TestResolveString(t *testing.T) {
+	tests := []struct {
+		name                             string
+		flag, env, cfg, defaultVal, want string
+	}{
+		{"all empty falls back to default", "", "", "", "native", "native"},
+		{"flag wins", "F", "E", "C", "D", "F"},
+		{"env wins when flag empty", "", "E", "C", "D", "E"},
+		{"config wins when flag/env empty", "", "", "C", "D", "C"},
+		{"whitespace treated as empty", "  ", "\t", "C", "D", "C"},
+		{"all empty with empty default", "", "", "", "", ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := resolveString(tc.flag, tc.env, tc.cfg, tc.defaultVal)
+			if got != tc.want {
+				t.Errorf("resolveString(%q,%q,%q,%q) = %q, want %q",
+					tc.flag, tc.env, tc.cfg, tc.defaultVal, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRunConfigSet_NewKeys(t *testing.T) {
+	tests := []struct {
+		name      string
+		key       string
+		value     string
+		check     func(*testing.T, *config.Config)
+		expectErr bool
+	}{
+		{
+			name:  "parser native",
+			key:   "parser",
+			value: "native",
+			check: func(t *testing.T, cfg *config.Config) {
+				if cfg.Parser != "native" {
+					t.Errorf("Parser = %q, want %q", cfg.Parser, "native")
+				}
+			},
+		},
+		{
+			name:      "parser invalid",
+			key:       "parser",
+			value:     "bogus",
+			expectErr: true,
+		},
+		{
+			name:  "llm.enabled true",
+			key:   "llm.enabled",
+			value: "true",
+			check: func(t *testing.T, cfg *config.Config) {
+				if !cfg.LLM.Enabled {
+					t.Error("LLM.Enabled = false, want true")
+				}
+			},
+		},
+		{
+			name:      "llm.enabled invalid",
+			key:       "llm.enabled",
+			value:     "yesno",
+			expectErr: true,
+		},
+		{
+			name:  "llm.provider upstage",
+			key:   "llm.provider",
+			value: "upstage",
+			check: func(t *testing.T, cfg *config.Config) {
+				if cfg.LLM.Provider != "upstage" {
+					t.Errorf("LLM.Provider = %q, want %q", cfg.LLM.Provider, "upstage")
+				}
+			},
+		},
+		{
+			name:      "llm.provider invalid",
+			key:       "llm.provider",
+			value:     "claude",
+			expectErr: true,
+		},
+		{
+			name:  "llm.model",
+			key:   "llm.model",
+			value: "gpt-4o",
+			check: func(t *testing.T, cfg *config.Config) {
+				if cfg.LLM.Model != "gpt-4o" {
+					t.Errorf("LLM.Model = %q, want %q", cfg.LLM.Model, "gpt-4o")
+				}
+			},
+		},
+		{
+			name:      "llm.model empty",
+			key:       "llm.model",
+			value:     "   ",
+			expectErr: true,
+		},
+		{
+			name:  "llm.base_url valid",
+			key:   "llm.base_url",
+			value: "http://localhost:11434",
+			check: func(t *testing.T, cfg *config.Config) {
+				if cfg.LLM.BaseURL != "http://localhost:11434" {
+					t.Errorf("LLM.BaseURL = %q, want %q", cfg.LLM.BaseURL, "http://localhost:11434")
+				}
+			},
+		},
+		{
+			name:      "llm.base_url no scheme",
+			key:       "llm.base_url",
+			value:     "localhost:11434",
+			expectErr: true,
+		},
+		{
+			name:  "llm.timeout 5m",
+			key:   "llm.timeout",
+			value: "5m",
+			check: func(t *testing.T, cfg *config.Config) {
+				if cfg.LLM.Timeout != "5m" {
+					t.Errorf("LLM.Timeout = %q, want %q", cfg.LLM.Timeout, "5m")
+				}
+			},
+		},
+		{
+			name:      "llm.timeout zero rejected",
+			key:       "llm.timeout",
+			value:     "0s",
+			expectErr: true,
+		},
+		{
+			name:      "llm.timeout invalid",
+			key:       "llm.timeout",
+			value:     "abc",
+			expectErr: true,
+		},
+		{
+			name:      "unknown key",
+			key:       "bogus.key",
+			value:     "1",
+			expectErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpHome := t.TempDir()
+			t.Setenv("HOME", tmpHome)
+
+			err := runConfigSet(configSetCmd, []string{tc.key, tc.value})
+			if tc.expectErr {
+				if err == nil {
+					t.Fatalf("runConfigSet(%q,%q) expected error, got nil", tc.key, tc.value)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("runConfigSet(%q,%q) unexpected error: %v", tc.key, tc.value, err)
+			}
+			loader, err := config.NewLoader()
+			if err != nil {
+				t.Fatalf("NewLoader: %v", err)
+			}
+			cfg, err := loader.LoadRaw()
+			if err != nil {
+				t.Fatalf("LoadRaw: %v", err)
+			}
+			tc.check(t, cfg)
 		})
 	}
 }

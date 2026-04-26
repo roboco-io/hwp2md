@@ -289,3 +289,46 @@ format:
 		t.Errorf("expected empty API key for unset env var, got %s", testProvider.APIKey)
 	}
 }
+
+func TestConfig_LLMRoundTrip(t *testing.T) {
+	tmpDir := t.TempDir()
+	loader := NewLoaderWithPath(filepath.Join(tmpDir, "config.yaml"))
+
+	src := DefaultConfig()
+	src.Parser = "upstage"
+	src.LLM = LLMConfig{
+		Enabled:  true,
+		Provider: "openai",
+		Model:    "gpt-4o-mini",
+		BaseURL:  "http://localhost:8080",
+		Timeout:  "5m",
+	}
+
+	if err := loader.Save(src); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	loaded, err := loader.Load()
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	if loaded.Parser != "upstage" {
+		t.Errorf("Parser = %q, want %q", loaded.Parser, "upstage")
+	}
+	if !loaded.LLM.Enabled {
+		t.Error("LLM.Enabled = false, want true")
+	}
+	if loaded.LLM.Provider != "openai" {
+		t.Errorf("LLM.Provider = %q, want %q", loaded.LLM.Provider, "openai")
+	}
+	if loaded.LLM.Model != "gpt-4o-mini" {
+		t.Errorf("LLM.Model = %q, want %q", loaded.LLM.Model, "gpt-4o-mini")
+	}
+	if loaded.LLM.BaseURL != "http://localhost:8080" {
+		t.Errorf("LLM.BaseURL = %q, want %q", loaded.LLM.BaseURL, "http://localhost:8080")
+	}
+	if loaded.LLM.Timeout != "5m" {
+		t.Errorf("LLM.Timeout = %q, want %q", loaded.LLM.Timeout, "5m")
+	}
+}

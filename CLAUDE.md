@@ -75,6 +75,19 @@ HWP/HWPX → Stage 1 (Parser) → IR → Stage 2 (LLM, optional) → Markdown
 | `HWP2MD_TIMEOUT` | LLM request timeout (Go duration: `5m`, `300s`, `10m30s`). Empty → provider default |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `UPSTAGE_API_KEY` | Provider API keys |
 
+Setting precedence (highest → lowest): CLI flag → env var → `~/.hwp2md/config.yaml` → built-in default.
+
+## Config File Keys (`hwp2md config set`)
+
+| Key | Type | Notes |
+|-----|------|-------|
+| `parser` | string | `native` or `upstage` |
+| `llm.enabled` | bool | Mirrors `--llm` / `HWP2MD_LLM` |
+| `llm.provider` | string | `openai`, `anthropic`, `gemini`, `upstage`, `ollama` |
+| `llm.model` | string | Mirrors `--model` / `HWP2MD_MODEL` |
+| `llm.base_url` | string | Mirrors `--base-url` / `HWP2MD_BASE_URL` |
+| `llm.timeout` | duration string | Mirrors `--timeout` / `HWP2MD_TIMEOUT` (e.g. `5m`) |
+
 ## Conventions
 
 - Korean is the primary language for CLI messages, comments, and documentation
