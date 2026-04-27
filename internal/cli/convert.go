@@ -151,7 +151,7 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		}
 		// Stage 2: LLM formatting
 		var result *llm.FormatResult
-		markdown, result, err = formatWithLLM(cmd, doc)
+		markdown, result, err = formatWithLLM(doc)
 		if err != nil {
 			return fmt.Errorf("LLM 포맷팅 실패: %w", err)
 		}
@@ -248,7 +248,7 @@ func detectProviderFromModel(model string) string {
 	}
 }
 
-func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatResult, error) {
+func formatWithLLM(doc *ir.Document) (string, *llm.FormatResult, error) {
 	// Determine model (from flag or env)
 	model := convertModel
 	if model == "" {
@@ -346,7 +346,7 @@ func parseLLMTimeout(flagVal, envVal string) (time.Duration, error) {
 
 	d, err := time.ParseDuration(raw)
 	if err != nil {
-		return 0, fmt.Errorf("%s 값 파싱 실패 (%q): Go 기간 형식이어야 합니다 (예: 5m, 300s): %w", source, raw, err)
+		return 0, fmt.Errorf("%s 값 파싱 실패 (%q): `5m`, `300s`, `10m30s` 같은 시간 형식이어야 합니다: %w", source, raw, err)
 	}
 	if d <= 0 {
 		return 0, fmt.Errorf("%s 값은 양수여야 합니다 (입력: %q)", source, raw)

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -242,22 +243,26 @@ func TestDetectProviderFromModel(t *testing.T) {
 
 func TestParseLLMTimeout(t *testing.T) {
 	tests := []struct {
-		name    string
-		flag    string
-		env     string
-		want    time.Duration
-		wantErr bool
+		name           string
+		flag           string
+		env            string
+		want           time.Duration
+		wantErr        bool
+		wantErrContain string // optional substring expected in the error message
 	}{
-		{"both empty falls back to provider default", "", "", 0, false},
-		{"flag value parsed", "5m", "", 5 * time.Minute, false},
-		{"env value parsed when flag empty", "", "300s", 300 * time.Second, false},
-		{"flag overrides env", "10m", "30s", 10 * time.Minute, false},
-		{"compound duration", "10m30s", "", 10*time.Minute + 30*time.Second, false},
-		{"whitespace trimmed", "  2m ", "", 2 * time.Minute, false},
-		{"invalid flag returns error", "abc", "", 0, true},
-		{"invalid env returns error", "", "5", 0, true},
-		{"zero rejected", "0s", "", 0, true},
-		{"negative rejected", "-1s", "", 0, true},
+		{name: "both empty falls back to provider default", flag: "", env: "", want: 0},
+		{name: "flag value parsed", flag: "5m", want: 5 * time.Minute},
+		{name: "env value parsed when flag empty", env: "300s", want: 300 * time.Second},
+		{name: "flag overrides env", flag: "10m", env: "30s", want: 10 * time.Minute},
+		{name: "compound duration", flag: "10m30s", want: 10*time.Minute + 30*time.Second},
+		{name: "whitespace trimmed", flag: "  2m ", want: 2 * time.Minute},
+		{name: "whitespace flag falls back to env", flag: "  ", env: "5m", want: 5 * time.Minute},
+		{name: "whitespace env returns provider default", env: "\t", want: 0},
+		{name: "invalid flag is reported as flag", flag: "abc", env: "5m", wantErr: true, wantErrContain: "--timeout"},
+		{name: "invalid env is reported as env", env: "abc", wantErr: true, wantErrContain: "HWP2MD_TIMEOUT"},
+		{name: "invalid env returns error", env: "5", wantErr: true},
+		{name: "zero rejected", flag: "0s", wantErr: true, wantErrContain: "양수"},
+		{name: "negative rejected", flag: "-1s", wantErr: true, wantErrContain: "양수"},
 	}
 
 	for _, tc := range tests {
@@ -266,6 +271,10 @@ func TestParseLLMTimeout(t *testing.T) {
 			if tc.wantErr {
 				if err == nil {
 					t.Fatalf("parseLLMTimeout(%q, %q) expected error, got nil", tc.flag, tc.env)
+				}
+				if tc.wantErrContain != "" && !strings.Contains(err.Error(), tc.wantErrContain) {
+					t.Errorf("parseLLMTimeout(%q, %q) error %q does not contain %q",
+						tc.flag, tc.env, err.Error(), tc.wantErrContain)
 				}
 				return
 			}
