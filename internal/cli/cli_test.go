@@ -440,7 +440,10 @@ func TestRunConfigSet_NewKeys(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tmpHome := t.TempDir()
+			// Cover both Unix (HOME) and Windows (USERPROFILE) home lookups
+			// so config.NewLoader() never touches the real user home.
 			t.Setenv("HOME", tmpHome)
+			t.Setenv("USERPROFILE", tmpHome)
 
 			err := runConfigSet(configSetCmd, []string{tc.key, tc.value})
 			if tc.expectErr {
