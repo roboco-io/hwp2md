@@ -3,9 +3,27 @@ package config
 
 // Config represents the application configuration.
 type Config struct {
-	DefaultProvider string              `yaml:"default_provider"`
-	Providers       map[string]Provider `yaml:"providers"`
-	Format          FormatConfig        `yaml:"format"`
+	// Parser selects the document parser: "native" (default) or "upstage".
+	Parser string `yaml:"parser,omitempty"`
+	// LLM contains the active LLM settings used by the convert command.
+	LLM LLMConfig `yaml:"llm,omitempty"`
+
+	// DefaultProvider/Providers/Format are retained for backward compatibility
+	// with existing config files and the legacy `format.*` set keys.
+	DefaultProvider string              `yaml:"default_provider,omitempty"`
+	Providers       map[string]Provider `yaml:"providers,omitempty"`
+	Format          FormatConfig        `yaml:"format,omitempty"`
+}
+
+// LLMConfig holds settings for the LLM stage of the convert command.
+// Empty fields fall back to environment variables and provider defaults.
+type LLMConfig struct {
+	Enabled  bool   `yaml:"enabled,omitempty"`
+	Provider string `yaml:"provider,omitempty"`
+	Model    string `yaml:"model,omitempty"`
+	BaseURL  string `yaml:"base_url,omitempty"`
+	// Timeout is a Go duration string (e.g. "5m", "300s"). Empty means default.
+	Timeout string `yaml:"timeout,omitempty"`
 }
 
 // Provider represents an LLM provider configuration.

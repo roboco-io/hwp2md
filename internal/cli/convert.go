@@ -119,14 +119,11 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(cmd.ErrOrStderr(), "파일 형식: %s\n", format)
 	}
 
-	// Determine parser type (from flag or env)
-	parserType := convertParser
-	if parserType == "" {
-		parserType = os.Getenv("HWP2MD_PARSER")
-	}
-	if parserType == "" {
-		parserType = "native"
-	}
+	// Load app config (file may not exist; defaults used in that case).
+	appCfg := loadAppConfig()
+
+	// Determine parser type (flag > env > config > default).
+	parserType := resolveString(convertParser, os.Getenv("HWP2MD_PARSER"), appCfg.Parser, "native")
 
 	if !convertQuiet && convertVerbose {
 		fmt.Fprintf(cmd.ErrOrStderr(), "파서: %s\n", parserType)
@@ -142,8 +139,8 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(cmd.ErrOrStderr(), "파싱 완료: %d 블록\n", len(doc.Content))
 	}
 
-	// Check if LLM should be used
-	useLLM := convertUseLLM || config.GetEnvBool("HWP2MD_LLM")
+	// Check if LLM should be used (flag > env > config).
+	useLLM := convertUseLLM || config.GetEnvBool("HWP2MD_LLM") || appCfg.LLM.Enabled
 
 	var markdown string
 	if useLLM {
@@ -152,7 +149,7 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		}
 		// Stage 2: LLM formatting
 		var result *llm.FormatResult
-		markdown, result, err = formatWithLLM(doc)
+		markdown, result, err = formatWithLLM(doc, appCfg)
 		if err != nil {
 			return fmt.Errorf("LLM 포맷팅 실패: %w", err)
 		}
@@ -249,27 +246,17 @@ func detectProviderFromModel(model string) string {
 	}
 }
 
-func formatWithLLM(doc *ir.Document) (string, *llm.FormatResult, error) {
-	// Determine model (from flag or env)
-	model := convertModel
-	if model == "" {
-		model = os.Getenv("HWP2MD_MODEL")
-	}
+func formatWithLLM(doc *ir.Document, appCfg *config.Config) (string, *llm.FormatResult, error) {
+	// Resolve LLM settings: flag > env > config > default.
+	model := resolveString(convertModel, os.Getenv("HWP2MD_MODEL"), appCfg.LLM.Model, "")
+	baseURL := resolveString(convertBaseURL, os.Getenv("HWP2MD_BASE_URL"), appCfg.LLM.BaseURL, "")
+	providerName := resolveString(convertProvider, "", appCfg.LLM.Provider, "")
 
-	// Determine base URL (from flag or env) for private tenancy
-	baseURL := convertBaseURL
-	if baseURL == "" {
-		baseURL = os.Getenv("HWP2MD_BASE_URL")
-	}
-
-	// Determine LLM request timeout (flag > env). Zero means provider default.
-	timeout, err := parseLLMTimeout(convertTimeout, os.Getenv("HWP2MD_TIMEOUT"))
+	// Determine LLM request timeout (flag > env > config). Zero means provider default.
+	timeout, err := parseLLMTimeout(convertTimeout, os.Getenv("HWP2MD_TIMEOUT"), appCfg.LLM.Timeout)
 	if err != nil {
 		return "", nil, err
 	}
-
-	// Auto-detect provider from model name, or use explicit flag
-	providerName := convertProvider
 	if providerName == "" {
 		providerName = detectProviderFromModel(model)
 	}
@@ -329,17 +316,20 @@ func formatWithLLM(doc *ir.Document) (string, *llm.FormatResult, error) {
 	return result.Markdown, result, nil
 }
 
-// parseLLMTimeout resolves the LLM request timeout from the --timeout flag
-// or the HWP2MD_TIMEOUT environment variable. The flag takes precedence;
-// when both are empty it returns 0 so each provider applies its own default.
-// The value must be a Go duration string (e.g. "5m", "300s", "10m30s") and
-// must be positive.
-func parseLLMTimeout(flagVal, envVal string) (time.Duration, error) {
+// parseLLMTimeout resolves the LLM request timeout in priority order:
+// --timeout flag > HWP2MD_TIMEOUT env > config llm.timeout. When all are
+// empty it returns 0 so each provider applies its own default. The value
+// must be a Go duration string (e.g. "5m", "300s", "10m30s") and positive.
+func parseLLMTimeout(flagVal, envVal, configVal string) (time.Duration, error) {
 	raw := strings.TrimSpace(flagVal)
 	source := "--timeout"
 	if raw == "" {
 		raw = strings.TrimSpace(envVal)
 		source = "HWP2MD_TIMEOUT"
+	}
+	if raw == "" {
+		raw = strings.TrimSpace(configVal)
+		source = "config llm.timeout"
 	}
 	if raw == "" {
 		return 0, nil
@@ -353,6 +343,33 @@ func parseLLMTimeout(flagVal, envVal string) (time.Duration, error) {
 		return 0, fmt.Errorf("%s 값은 양수여야 합니다 (입력: %q)", source, raw)
 	}
 	return d, nil
+}
+
+// loadAppConfig loads the persisted config file.
+// Missing files yield DefaultConfig() so callers can read fields safely.
+// Other I/O or parse errors are silently swallowed so a broken config never
+// blocks document conversion; flags and env vars still take precedence.
+func loadAppConfig() *config.Config {
+	loader, err := config.NewLoader()
+	if err != nil {
+		return config.DefaultConfig()
+	}
+	cfg, err := loader.Load()
+	if err != nil || cfg == nil {
+		return config.DefaultConfig()
+	}
+	return cfg
+}
+
+// resolveString returns the first non-empty value among flag, env, config,
+// then falls back to defaultVal. Whitespace-only entries are treated as empty.
+func resolveString(flagVal, envVal, configVal, defaultVal string) string {
+	for _, v := range []string{flagVal, envVal, configVal} {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return defaultVal
 }
 
 func convertToBasicMarkdown(doc *ir.Document) string {

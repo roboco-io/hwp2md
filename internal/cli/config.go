@@ -2,9 +2,12 @@ package cli
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/roboco-io/hwp2md/internal/config"
 	"github.com/spf13/cobra"
@@ -51,13 +54,23 @@ var configSetCmd = &cobra.Command{
 	Long: `설정 값을 변경합니다.
 
 지원하는 키:
-  default_provider    기본 LLM 프로바이더 (anthropic, openai, gemini, ollama)
+  parser              파서 선택 (native, upstage)
+  llm.enabled         LLM 활성화 (true/false)
+  llm.provider        LLM 프로바이더 (openai, anthropic, gemini, upstage, ollama)
+  llm.model           LLM 모델 이름
+  llm.base_url        프라이빗 API 엔드포인트
+  llm.timeout         LLM 요청 타임아웃 (예: 5m, 300s)
+  default_provider    (호환) 기본 LLM 프로바이더
   format.temperature  LLM 온도 (0.0-1.0)
   format.language     출력 언어 (ko, en)
 
 예시:
-  hwp2md config set default_provider openai
-  hwp2md config set format.temperature 0.5`,
+  hwp2md config set parser native
+  hwp2md config set llm.enabled true
+  hwp2md config set llm.provider openai
+  hwp2md config set llm.model gpt-4o-mini
+  hwp2md config set llm.base_url http://localhost:11434
+  hwp2md config set llm.timeout 5m`,
 	Args: cobra.ExactArgs(2),
 	RunE: runConfigSet,
 }
@@ -179,6 +192,50 @@ func runConfigSet(cmd *cobra.Command, args []string) error {
 
 	// Update config based on key
 	switch key {
+	case "parser":
+		validParsers := []string{"native", "upstage"}
+		if !contains(validParsers, value) {
+			return fmt.Errorf("유효하지 않은 파서: %s (지원: %s)", value, strings.Join(validParsers, ", "))
+		}
+		cfg.Parser = value
+
+	case "llm.enabled":
+		enabled, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("유효하지 않은 bool 값: %s (true/false)", value)
+		}
+		cfg.LLM.Enabled = enabled
+
+	case "llm.provider":
+		validProviders := []string{"openai", "anthropic", "gemini", "upstage", "ollama"}
+		if !contains(validProviders, value) {
+			return fmt.Errorf("유효하지 않은 프로바이더: %s (지원: %s)", value, strings.Join(validProviders, ", "))
+		}
+		cfg.LLM.Provider = value
+
+	case "llm.model":
+		if strings.TrimSpace(value) == "" {
+			return fmt.Errorf("모델 이름이 비어 있습니다")
+		}
+		cfg.LLM.Model = value
+
+	case "llm.base_url":
+		u, err := url.Parse(value)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			return fmt.Errorf("유효하지 않은 URL: %s", value)
+		}
+		cfg.LLM.BaseURL = value
+
+	case "llm.timeout":
+		d, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("유효하지 않은 타임아웃 값: %s (Go 기간 형식 필요, 예: 5m, 300s)", value)
+		}
+		if d <= 0 {
+			return fmt.Errorf("타임아웃은 양수여야 합니다: %s", value)
+		}
+		cfg.LLM.Timeout = value
+
 	case "default_provider":
 		validProviders := []string{"anthropic", "openai", "gemini", "ollama"}
 		if !contains(validProviders, value) {
@@ -204,7 +261,7 @@ func runConfigSet(cmd *cobra.Command, args []string) error {
 		cfg.Format.Language = value
 
 	default:
-		return fmt.Errorf("알 수 없는 설정 키: %s\n지원하는 키: default_provider, format.temperature, format.language", key)
+		return fmt.Errorf("알 수 없는 설정 키: %s\n지원하는 키: parser, llm.enabled, llm.provider, llm.model, llm.base_url, llm.timeout, default_provider, format.temperature, format.language", key)
 	}
 
 	if err := loader.Save(cfg); err != nil {
