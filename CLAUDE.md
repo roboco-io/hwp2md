@@ -72,6 +72,7 @@ HWP/HWPX → Stage 1 (Parser) → IR → Stage 2 (LLM, optional) → Markdown
 | `HWP2MD_LLM` | Enable Stage 2: `true` |
 | `HWP2MD_MODEL` | Model name (auto-detects provider) |
 | `HWP2MD_BASE_URL` | Private API endpoint (Bedrock, Azure, local) |
+| `HWP2MD_TIMEOUT` | LLM request timeout (Go duration: `5m`, `300s`, `10m30s`). Empty → provider default |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `UPSTAGE_API_KEY` | Provider API keys |
 
 ## Conventions

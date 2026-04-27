@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/roboco-io/hwp2md/internal/config"
 	"github.com/roboco-io/hwp2md/internal/formatter"
@@ -32,6 +33,7 @@ var (
 	convertParser      string
 	convertExtractImgs bool
 	convertImagesDir   string
+	convertTimeout     string
 	convertVerbose     bool
 	convertQuiet       bool
 )
@@ -50,6 +52,7 @@ var convertCmd = &cobra.Command{
   HWP2MD_LLM=true       Stage 2 활성화
   HWP2MD_MODEL=xxx      모델 이름 (프로바이더 자동 감지)
   HWP2MD_BASE_URL=xxx   프라이빗 API 엔드포인트 (Bedrock, 로컬 서버 등)
+  HWP2MD_TIMEOUT=xxx    LLM 요청 타임아웃 (예: 5m, 300s, 10m30s)
 
 모델 이름 예시:
   claude-*              → Anthropic
@@ -75,6 +78,7 @@ var convertCmd = &cobra.Command{
   hwp2md convert document.hwpx --llm --model gpt-4o
   hwp2md convert document.hwpx --llm --model solar-pro
   hwp2md convert document.hwpx --llm --base-url http://localhost:8080
+  hwp2md convert document.hwpx --llm --timeout 10m
   hwp2md convert document.hwpx --extract-images ./images`,
 	Args: cobra.ExactArgs(1),
 	RunE: runConvert,
@@ -89,6 +93,7 @@ func init() {
 	convertCmd.Flags().StringVar(&convertParser, "parser", "", "파서 선택 (native, upstage)")
 	convertCmd.Flags().BoolVar(&convertExtractImgs, "extract-images", false, "이미지 추출 활성화")
 	convertCmd.Flags().StringVar(&convertImagesDir, "images-dir", "./images", "추출된 이미지 저장 디렉토리")
+	convertCmd.Flags().StringVar(&convertTimeout, "timeout", "", "LLM 요청 타임아웃 (예: 5m, 300s; 미지정 시 프로바이더 기본값)")
 	convertCmd.Flags().BoolVarP(&convertVerbose, "verbose", "v", false, "상세 출력")
 	convertCmd.Flags().BoolVarP(&convertQuiet, "quiet", "q", false, "조용한 모드")
 
@@ -147,7 +152,7 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		}
 		// Stage 2: LLM formatting
 		var result *llm.FormatResult
-		markdown, result, err = formatWithLLM(cmd, doc)
+		markdown, result, err = formatWithLLM(doc)
 		if err != nil {
 			return fmt.Errorf("LLM 포맷팅 실패: %w", err)
 		}
@@ -244,7 +249,7 @@ func detectProviderFromModel(model string) string {
 	}
 }
 
-func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatResult, error) {
+func formatWithLLM(doc *ir.Document) (string, *llm.FormatResult, error) {
 	// Determine model (from flag or env)
 	model := convertModel
 	if model == "" {
@@ -257,6 +262,12 @@ func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatRes
 		baseURL = os.Getenv("HWP2MD_BASE_URL")
 	}
 
+	// Determine LLM request timeout (flag > env). Zero means provider default.
+	timeout, err := parseLLMTimeout(convertTimeout, os.Getenv("HWP2MD_TIMEOUT"))
+	if err != nil {
+		return "", nil, err
+	}
+
 	// Auto-detect provider from model name, or use explicit flag
 	providerName := convertProvider
 	if providerName == "" {
@@ -265,33 +276,37 @@ func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatRes
 
 	// Create provider
 	var provider llm.Provider
-	var err error
 
 	switch providerName {
 	case "openai":
 		provider, err = openai.New(openai.Config{
 			Model:   model,
 			BaseURL: baseURL,
+			Timeout: timeout,
 		})
 	case "anthropic":
 		provider, err = anthropic.New(anthropic.Config{
 			Model:   model,
 			BaseURL: baseURL,
+			Timeout: timeout,
 		})
 	case "gemini":
 		// Gemini does not support custom base URL (uses Google API only)
 		provider, err = gemini.New(gemini.Config{
-			Model: model,
+			Model:   model,
+			Timeout: timeout,
 		})
 	case "upstage":
 		provider, err = llmupstage.New(llmupstage.Config{
 			Model:   model,
 			BaseURL: baseURL,
+			Timeout: timeout,
 		})
 	case "ollama":
 		provider, err = ollama.New(ollama.Config{
 			Model:   model,
 			BaseURL: baseURL,
+			Timeout: timeout,
 		})
 	default:
 		return "", nil, fmt.Errorf("지원하지 않는 프로바이더: %s (지원: openai, anthropic, gemini, upstage, ollama)", providerName)
@@ -312,6 +327,32 @@ func formatWithLLM(cmd *cobra.Command, doc *ir.Document) (string, *llm.FormatRes
 	}
 
 	return result.Markdown, result, nil
+}
+
+// parseLLMTimeout resolves the LLM request timeout from the --timeout flag
+// or the HWP2MD_TIMEOUT environment variable. The flag takes precedence;
+// when both are empty it returns 0 so each provider applies its own default.
+// The value must be a Go duration string (e.g. "5m", "300s", "10m30s") and
+// must be positive.
+func parseLLMTimeout(flagVal, envVal string) (time.Duration, error) {
+	raw := strings.TrimSpace(flagVal)
+	source := "--timeout"
+	if raw == "" {
+		raw = strings.TrimSpace(envVal)
+		source = "HWP2MD_TIMEOUT"
+	}
+	if raw == "" {
+		return 0, nil
+	}
+
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return 0, fmt.Errorf("%s 값 파싱 실패 (%q): `5m`, `300s`, `10m30s` 같은 시간 형식이어야 합니다: %w", source, raw, err)
+	}
+	if d <= 0 {
+		return 0, fmt.Errorf("%s 값은 양수여야 합니다 (입력: %q)", source, raw)
+	}
+	return d, nil
 }
 
 func convertToBasicMarkdown(doc *ir.Document) string {
