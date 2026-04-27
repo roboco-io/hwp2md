@@ -252,9 +252,8 @@ func formatWithLLM(doc *ir.Document, appCfg *config.Config) (string, *llm.Format
 	baseURL := resolveString(convertBaseURL, os.Getenv("HWP2MD_BASE_URL"), appCfg.LLM.BaseURL, "")
 	providerName := resolveString(convertProvider, "", appCfg.LLM.Provider, "")
 
-	// Determine LLM request timeout (flag > env). Zero means provider default.
-	// Note: config llm.timeout wire-up is a follow-up commit.
-	timeout, err := parseLLMTimeout(convertTimeout, os.Getenv("HWP2MD_TIMEOUT"))
+	// Determine LLM request timeout (flag > env > config). Zero means provider default.
+	timeout, err := parseLLMTimeout(convertTimeout, os.Getenv("HWP2MD_TIMEOUT"), appCfg.LLM.Timeout)
 	if err != nil {
 		return "", nil, err
 	}
@@ -317,17 +316,20 @@ func formatWithLLM(doc *ir.Document, appCfg *config.Config) (string, *llm.Format
 	return result.Markdown, result, nil
 }
 
-// parseLLMTimeout resolves the LLM request timeout from the --timeout flag
-// or the HWP2MD_TIMEOUT environment variable. The flag takes precedence;
-// when both are empty it returns 0 so each provider applies its own default.
-// The value must be a Go duration string (e.g. "5m", "300s", "10m30s") and
-// must be positive.
-func parseLLMTimeout(flagVal, envVal string) (time.Duration, error) {
+// parseLLMTimeout resolves the LLM request timeout in priority order:
+// --timeout flag > HWP2MD_TIMEOUT env > config llm.timeout. When all are
+// empty it returns 0 so each provider applies its own default. The value
+// must be a Go duration string (e.g. "5m", "300s", "10m30s") and positive.
+func parseLLMTimeout(flagVal, envVal, configVal string) (time.Duration, error) {
 	raw := strings.TrimSpace(flagVal)
 	source := "--timeout"
 	if raw == "" {
 		raw = strings.TrimSpace(envVal)
 		source = "HWP2MD_TIMEOUT"
+	}
+	if raw == "" {
+		raw = strings.TrimSpace(configVal)
+		source = "config llm.timeout"
 	}
 	if raw == "" {
 		return 0, nil

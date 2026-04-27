@@ -248,20 +248,26 @@ func TestParseLLMTimeout(t *testing.T) {
 		name           string
 		flag           string
 		env            string
+		cfg            string
 		want           time.Duration
 		wantErr        bool
 		wantErrContain string // optional substring expected in the error message
 	}{
-		{name: "both empty falls back to provider default", flag: "", env: "", want: 0},
+		{name: "all empty falls back to provider default", want: 0},
 		{name: "flag value parsed", flag: "5m", want: 5 * time.Minute},
 		{name: "env value parsed when flag empty", env: "300s", want: 300 * time.Second},
+		{name: "config value parsed when flag/env empty", cfg: "2m", want: 2 * time.Minute},
 		{name: "flag overrides env", flag: "10m", env: "30s", want: 10 * time.Minute},
+		{name: "flag overrides config", flag: "10m", cfg: "30s", want: 10 * time.Minute},
+		{name: "env overrides config", env: "30s", cfg: "5m", want: 30 * time.Second},
 		{name: "compound duration", flag: "10m30s", want: 10*time.Minute + 30*time.Second},
 		{name: "whitespace trimmed", flag: "  2m ", want: 2 * time.Minute},
 		{name: "whitespace flag falls back to env", flag: "  ", env: "5m", want: 5 * time.Minute},
-		{name: "whitespace env returns provider default", env: "\t", want: 0},
+		{name: "whitespace flag/env falls back to config", flag: " ", env: "\t", cfg: "1m", want: time.Minute},
+		{name: "whitespace everywhere returns provider default", env: "\t", cfg: "  ", want: 0},
 		{name: "invalid flag is reported as flag", flag: "abc", env: "5m", wantErr: true, wantErrContain: "--timeout"},
 		{name: "invalid env is reported as env", env: "abc", wantErr: true, wantErrContain: "HWP2MD_TIMEOUT"},
+		{name: "invalid config is reported as config", cfg: "abc", wantErr: true, wantErrContain: "llm.timeout"},
 		{name: "invalid env returns error", env: "5", wantErr: true},
 		{name: "zero rejected", flag: "0s", wantErr: true, wantErrContain: "양수"},
 		{name: "negative rejected", flag: "-1s", wantErr: true, wantErrContain: "양수"},
@@ -269,22 +275,22 @@ func TestParseLLMTimeout(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := parseLLMTimeout(tc.flag, tc.env)
+			got, err := parseLLMTimeout(tc.flag, tc.env, tc.cfg)
 			if tc.wantErr {
 				if err == nil {
-					t.Fatalf("parseLLMTimeout(%q, %q) expected error, got nil", tc.flag, tc.env)
+					t.Fatalf("parseLLMTimeout(%q, %q, %q) expected error, got nil", tc.flag, tc.env, tc.cfg)
 				}
 				if tc.wantErrContain != "" && !strings.Contains(err.Error(), tc.wantErrContain) {
-					t.Errorf("parseLLMTimeout(%q, %q) error %q does not contain %q",
-						tc.flag, tc.env, err.Error(), tc.wantErrContain)
+					t.Errorf("parseLLMTimeout(%q, %q, %q) error %q does not contain %q",
+						tc.flag, tc.env, tc.cfg, err.Error(), tc.wantErrContain)
 				}
 				return
 			}
 			if err != nil {
-				t.Fatalf("parseLLMTimeout(%q, %q) unexpected error: %v", tc.flag, tc.env, err)
+				t.Fatalf("parseLLMTimeout(%q, %q, %q) unexpected error: %v", tc.flag, tc.env, tc.cfg, err)
 			}
 			if got != tc.want {
-				t.Errorf("parseLLMTimeout(%q, %q) = %v, want %v", tc.flag, tc.env, got, tc.want)
+				t.Errorf("parseLLMTimeout(%q, %q, %q) = %v, want %v", tc.flag, tc.env, tc.cfg, got, tc.want)
 			}
 		})
 	}
