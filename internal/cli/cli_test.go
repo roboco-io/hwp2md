@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/roboco-io/hwp2md/internal/config"
+	"github.com/roboco-io/hwp2md/internal/ir"
 )
 
 func TestSetVersion(t *testing.T) {
@@ -465,5 +466,17 @@ func TestRunConfigSet_NewKeys(t *testing.T) {
 			}
 			tc.check(t, cfg)
 		})
+	}
+}
+
+func TestConvertToBasicMarkdown_TableCellParagraphsUseBreaks(t *testing.T) {
+	doc := ir.NewDocument()
+	table := ir.NewTable(1, 1)
+	table.Cells[0][0].Text = "문단1\n문단2\n문단3"
+	doc.AddTable(table)
+
+	md := convertToBasicMarkdown(doc)
+	if !strings.Contains(md, "문단1<br>문단2<br>문단3") {
+		t.Fatalf("expected markdown table cell to preserve paragraph boundaries with <br>, got: %s", md)
 	}
 }
