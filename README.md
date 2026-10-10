@@ -1,6 +1,6 @@
 # hwp2md
 
-[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Build](https://github.com/roboco-io/hwp2md/actions/workflows/test.yml/badge.svg)](https://github.com/roboco-io/hwp2md/actions/workflows/test.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/roboco-io/hwp2md)](https://goreportcard.com/report/github.com/roboco-io/hwp2md)
@@ -231,7 +231,7 @@ make build
 
 ### 요구사항
 
-- Go 1.24 이상
+- Go 1.25 이상
 - [golangci-lint](https://golangci-lint.run/welcome/install/) (lint 검사)
 - [Claude Code](https://claude.ai/code) (권장) - AI 페어 프로그래밍 도구
 

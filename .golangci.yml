@@ -1,21 +1,36 @@
+version: "2"
 run:
   timeout: 5m
-
 linters:
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
-    - gofmt
-    - goimports
     - misspell
     - revive
-
-linters-settings:
-  revive:
-    rules:
-      - name: exported
-        disabled: false
+  settings:
+    staticcheck:
+      # v1의 staticcheck/gosimple 검사 범위를 유지합니다.
+      checks: ["SA*", "S1*"]
+    revive:
+      rules:
+        - name: exported
+          disabled: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

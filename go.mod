@@ -2,6 +2,8 @@ module github.com/roboco-io/hwp2md
 
 go 1.25.0
 
+toolchain go1.25.8
+
 require (
 	github.com/anthropics/anthropic-sdk-go v1.19.0
 	github.com/richardlehane/mscfb v1.0.6
