@@ -82,7 +82,7 @@ release:
 
     #### Go 설치
     ```bash
-    go install github.com/roboco-io/hwp2md/cmd/hwp2md@{{ .Version }}
+    go install github.com/roboco-io/hwp2md/cmd/hwp2md@{{ .Tag }}
     ```
 
     ### 주요 기능
