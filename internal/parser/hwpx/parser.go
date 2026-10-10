@@ -225,6 +225,10 @@ func (p *Parser) parseSectionXML(doc *ir.Document, decoder *xml.Decoder) error {
 
 			switch localName {
 			case "p":
+				// 셀 안의 새 문단을 앞 문단과 구분합니다.
+				if cell := getCurrentCell(); cell != nil && cell.text.Len() > 0 {
+					cell.text.WriteString("\n")
+				}
 				currentParagraph = ir.NewParagraph("")
 				// styleIDRef attribute is available for future style processing
 
