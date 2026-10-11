@@ -3,6 +3,8 @@ package cli
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,6 +38,7 @@ var (
 	convertTimeout     string
 	convertVerbose     bool
 	convertQuiet       bool
+	convertLogLevel    string
 )
 
 var convertCmd = &cobra.Command{
@@ -53,6 +56,7 @@ var convertCmd = &cobra.Command{
   HWP2MD_MODEL=xxx      모델 이름 (프로바이더 자동 감지)
   HWP2MD_BASE_URL=xxx   프라이빗 API 엔드포인트 (Bedrock, 로컬 서버 등)
   HWP2MD_TIMEOUT=xxx    LLM 요청 타임아웃 (예: 5m, 300s, 10m30s)
+  HWP2MD_LOG_LEVEL=xxx  로그 레벨 (debug, info, warn, error)
 
 모델 이름 예시:
   claude-*              → Anthropic
@@ -94,70 +98,91 @@ func init() {
 	convertCmd.Flags().BoolVar(&convertExtractImgs, "extract-images", false, "이미지 추출 활성화")
 	convertCmd.Flags().StringVar(&convertImagesDir, "images-dir", "./images", "추출된 이미지 저장 디렉토리")
 	convertCmd.Flags().StringVar(&convertTimeout, "timeout", "", "LLM 요청 타임아웃 (예: 5m, 300s; 미지정 시 프로바이더 기본값)")
-	convertCmd.Flags().BoolVarP(&convertVerbose, "verbose", "v", false, "상세 출력")
+	convertCmd.Flags().BoolVarP(&convertVerbose, "verbose", "v", false, "상세 출력 (debug 로그)")
 	convertCmd.Flags().BoolVarP(&convertQuiet, "quiet", "q", false, "조용한 모드")
+	convertCmd.Flags().StringVar(&convertLogLevel, "log-level", "", "로그 레벨 (debug, info, warn, error; -v/-q보다 우선)")
 
 	rootCmd.AddCommand(convertCmd)
 }
 
+// convertRun holds per-invocation output settings for the convert command.
+type convertRun struct {
+	logger *slog.Logger
+	stderr io.Writer
+	// showProgress is true when info-level output is enabled.
+	showProgress bool
+	// animate is true when stderr is a terminal and the spinner can redraw.
+	animate bool
+}
+
+func (r *convertRun) startProgress(msg string) *progress {
+	return startProgress(r.stderr, msg, r.showProgress, r.animate)
+}
+
 func runConvert(cmd *cobra.Command, args []string) error {
+	// 인자 검증을 통과한 뒤의 실행 오류에는 사용법(usage)을 출력하지 않는다.
+	cmd.SilenceUsage = true
 	inputPath := args[0]
+
+	level, err := resolveLogLevel(convertLogLevel, convertVerbose, convertQuiet, os.Getenv("HWP2MD_LOG_LEVEL"))
+	if err != nil {
+		return err
+	}
+	stderr := cmd.ErrOrStderr()
+	run := &convertRun{
+		logger:       newLogger(stderr, level),
+		stderr:       stderr,
+		showProgress: level <= slog.LevelInfo,
+		animate:      isTerminal(stderr),
+	}
+	logger := run.logger
 
 	// Check file exists
 	if _, err := os.Stat(inputPath); os.IsNotExist(err) {
-		return fmt.Errorf("파일을 찾을 수 없습니다: %s", inputPath)
+		return withHint(fmt.Errorf("파일을 찾을 수 없습니다: %s", inputPath),
+			"파일 경로와 이름을 확인하세요. 경로에 공백이 있으면 따옴표로 감싸세요.")
 	}
 
 	// Detect format
 	format := parser.DetectFormat(inputPath)
 	if format == parser.FormatUnknown {
-		return fmt.Errorf("지원하지 않는 파일 형식입니다: %s", filepath.Ext(inputPath))
+		return withHint(fmt.Errorf("지원하지 않는 파일 형식입니다: %s", filepath.Ext(inputPath)),
+			".hwp(HWP 5.x)와 .hwpx 파일만 변환할 수 있습니다.")
 	}
 
-	if !convertQuiet && convertVerbose {
-		fmt.Fprintf(cmd.ErrOrStderr(), "입력 파일: %s\n", inputPath)
-		fmt.Fprintf(cmd.ErrOrStderr(), "파일 형식: %s\n", format)
-	}
+	logger.Debug("입력 파일", "path", inputPath, "format", format)
 
 	// Load app config (file may not exist; defaults used in that case).
 	appCfg := loadAppConfig()
 
 	// Determine parser type (flag > env > config > default).
 	parserType := resolveString(convertParser, os.Getenv("HWP2MD_PARSER"), appCfg.Parser, "native")
-
-	if !convertQuiet && convertVerbose {
-		fmt.Fprintf(cmd.ErrOrStderr(), "파서: %s\n", parserType)
-	}
+	logger.Debug("파서 선택", "parser", parserType)
 
 	// Parse document (Stage 1)
-	doc, err := parseDocumentForConvert(cmd, inputPath, format, parserType)
+	parseStart := time.Now()
+	doc, err := parseDocumentForConvert(run, inputPath, format, parserType)
 	if err != nil {
 		return fmt.Errorf("문서 파싱 실패: %w", err)
 	}
-
-	if !convertQuiet && convertVerbose {
-		fmt.Fprintf(cmd.ErrOrStderr(), "파싱 완료: %d 블록\n", len(doc.Content))
-	}
+	logger.Debug("파싱 완료", "blocks", len(doc.Content), "elapsed", time.Since(parseStart).Round(time.Millisecond))
 
 	// Check if LLM should be used (flag > env > config).
 	useLLM := convertUseLLM || config.GetEnvBool("HWP2MD_LLM") || appCfg.LLM.Enabled
 
 	var markdown string
 	if useLLM {
-		if !convertQuiet {
-			fmt.Fprintf(cmd.ErrOrStderr(), "LLM 포맷팅 중...\n")
-		}
 		// Stage 2: LLM formatting
 		var result *llm.FormatResult
-		markdown, result, err = formatWithLLM(doc, appCfg)
+		markdown, result, err = formatWithLLM(run, doc, appCfg)
 		if err != nil {
 			return fmt.Errorf("LLM 포맷팅 실패: %w", err)
 		}
 		// Show token usage
-		if !convertQuiet && result != nil {
-			fmt.Fprintf(cmd.ErrOrStderr(), "모델: %s\n", result.Model)
-			fmt.Fprintf(cmd.ErrOrStderr(), "토큰 사용량: 입력 %d, 출력 %d, 총 %d\n",
-				result.Usage.InputTokens, result.Usage.OutputTokens, result.Usage.TotalTokens)
+		if result != nil {
+			logger.Info(fmt.Sprintf("모델: %s", result.Model))
+			logger.Info(fmt.Sprintf("토큰 사용량: 입력 %d, 출력 %d, 총 %d",
+				result.Usage.InputTokens, result.Usage.OutputTokens, result.Usage.TotalTokens))
 		}
 	} else {
 		// Stage 1 only: Basic markdown conversion
@@ -171,28 +196,28 @@ func runConvert(cmd *cobra.Command, args []string) error {
 		if err := os.WriteFile(convertOutput, []byte(markdown), 0644); err != nil {
 			return fmt.Errorf("파일 저장 실패: %w", err)
 		}
-		if !convertQuiet {
-			fmt.Fprintf(cmd.ErrOrStderr(), "변환 완료: %s\n", convertOutput)
-		}
+		logger.Info(fmt.Sprintf("변환 완료: %s", convertOutput))
 	}
 
 	return nil
 }
 
-func parseDocumentForConvert(cmd *cobra.Command, path string, format parser.Format, parserType string) (*ir.Document, error) {
+func parseDocumentForConvert(run *convertRun, path string, format parser.Format, parserType string) (*ir.Document, error) {
 	// Use Upstage Document Parse API if selected
 	if parserType == "upstage" {
 		upstageParser, err := parserupstage.New(parserupstage.Config{})
 		if err != nil {
-			return nil, fmt.Errorf("Upstage 파서 초기화 실패: %w", err)
+			err = fmt.Errorf("Upstage 파서 초기화 실패: %w", err)
+			if isAPIKeyError(err) {
+				err = withHint(err, apiKeyHint("upstage"))
+			}
+			return nil, err
 		}
 
-		if !convertQuiet {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Upstage Document Parse API 사용 중...\n")
-		}
-
-		ctx := context.Background()
-		return upstageParser.Parse(ctx, path)
+		p := run.startProgress("Upstage Document Parse API 사용 중...")
+		doc, err := upstageParser.Parse(context.Background(), path)
+		run.logger.Debug("Upstage API 응답", "elapsed", p.Stop().Round(time.Millisecond))
+		return doc, err
 	}
 
 	// Native parser
@@ -246,7 +271,7 @@ func detectProviderFromModel(model string) string {
 	}
 }
 
-func formatWithLLM(doc *ir.Document, appCfg *config.Config) (string, *llm.FormatResult, error) {
+func formatWithLLM(run *convertRun, doc *ir.Document, appCfg *config.Config) (string, *llm.FormatResult, error) {
 	// Resolve LLM settings: flag > env > config > default.
 	model := resolveString(convertModel, os.Getenv("HWP2MD_MODEL"), appCfg.LLM.Model, "")
 	baseURL := resolveString(convertBaseURL, os.Getenv("HWP2MD_BASE_URL"), appCfg.LLM.BaseURL, "")
@@ -300,15 +325,21 @@ func formatWithLLM(doc *ir.Document, appCfg *config.Config) (string, *llm.Format
 	}
 
 	if err != nil {
-		return "", nil, fmt.Errorf("프로바이더 초기화 실패: %w", err)
+		err = fmt.Errorf("프로바이더 초기화 실패: %w", err)
+		if isAPIKeyError(err) {
+			err = withHint(err, apiKeyHint(providerName))
+		}
+		return "", nil, err
 	}
+	run.logger.Debug("LLM 설정", "provider", providerName, "model", model, "base_url", baseURL, "timeout", timeout)
 
 	// Format options
 	opts := llm.DefaultFormatOptions()
 
 	// Call LLM
-	ctx := context.Background()
-	result, err := provider.Format(ctx, doc, opts)
+	p := run.startProgress("LLM 포맷팅 중...")
+	result, err := provider.Format(context.Background(), doc, opts)
+	run.logger.Debug("LLM 응답", "elapsed", p.Stop().Round(time.Millisecond))
 	if err != nil {
 		return "", nil, err
 	}

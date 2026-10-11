@@ -52,8 +52,15 @@ func SetVersion(v string) {
 	version = v
 }
 
+// Execute runs the root command. Errors are printed with a troubleshooting
+// hint when one applies, instead of cobra's default "Error:" line.
 func Execute() error {
-	return rootCmd.Execute()
+	rootCmd.SilenceErrors = true
+	err := rootCmd.Execute()
+	if err != nil {
+		printError(rootCmd.ErrOrStderr(), err)
+	}
+	return err
 }
 
 func init() {
@@ -66,6 +73,7 @@ func init() {
 	rootCmd.Flags().StringVar(&convertModel, "model", "", "LLM 모델 이름")
 	rootCmd.Flags().BoolVar(&convertExtractImgs, "extract-images", false, "이미지 추출 활성화")
 	rootCmd.Flags().StringVar(&convertImagesDir, "images-dir", "./images", "추출된 이미지 저장 디렉토리")
-	rootCmd.Flags().BoolVarP(&convertVerbose, "verbose", "v", false, "상세 출력")
+	rootCmd.Flags().BoolVarP(&convertVerbose, "verbose", "v", false, "상세 출력 (debug 로그)")
 	rootCmd.Flags().BoolVarP(&convertQuiet, "quiet", "q", false, "조용한 모드")
+	rootCmd.Flags().StringVar(&convertLogLevel, "log-level", "", "로그 레벨 (debug, info, warn, error; -v/-q보다 우선)")
 }

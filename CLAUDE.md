@@ -73,6 +73,7 @@ HWP/HWPX → Stage 1 (Parser) → IR → Stage 2 (LLM, optional) → Markdown
 | `HWP2MD_MODEL` | Model name (auto-detects provider) |
 | `HWP2MD_BASE_URL` | Private API endpoint (Bedrock, Azure, local) |
 | `HWP2MD_TIMEOUT` | LLM request timeout (Go duration: `5m`, `300s`, `10m30s`). Empty → provider default |
+| `HWP2MD_LOG_LEVEL` | Log level: `debug`, `info` (default), `warn`, `error`. `--log-level` > `-v`(debug)/`-q`(error) > env |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `UPSTAGE_API_KEY` | Provider API keys |
 
 Setting precedence (highest → lowest): CLI flag → env var → `~/.hwp2md/config.yaml` → built-in default.
@@ -92,6 +93,7 @@ Setting precedence (highest → lowest): CLI flag → env var → `~/.hwp2md/con
 
 - Korean is the primary language for CLI messages, comments, and documentation
 - Cell merge handling: rowspan → `〃`, colspan → empty cell
+- CLI output: logs go to stderr via `slog` (`internal/cli/log.go`); errors print as `오류:` + optional `힌트:` (`internal/cli/hints.go`, attach with `withHint`); long waits use `startProgress` (`internal/cli/progress.go`)
 - Special whitespace elements (`<hp:fwSpace/>`, `<hp:hwSpace/>`) → regular space
 
 ## HWP5 Binary Format Notes
