@@ -343,6 +343,7 @@ Extract Options:
 Global Options:
   -v, --verbose             상세 출력
   -q, --quiet               조용한 모드
+      --log-level string    로그 레벨 (debug, info, warn, error)
   -h, --help                도움말 출력
   -V, --version             버전 출력
 ```
